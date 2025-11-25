@@ -1,0 +1,64 @@
+<!-- <template>
+    <lightning-card title="CSV Headers Dropdowns" icon-name="custom:custom63">
+        <template if:true={csvHeaders}>
+            <template for:each={csvHeaders} for:item="header">
+                <div key={header} class="slds-m-around_medium">
+                    <lightning-combobox
+                        name={header}
+                        label={header}
+                        placeholder="Select an option"
+                        options={fieldOptions}
+                        onchange={handleFieldChange}
+                        >
+                    </lightning-combobox>
+                </div>
+            </template>
+        </template>
+        <template if:false={csvHeaders}>
+            <p>No headers found. Please upload a valid CSV file.</p>
+        </template>
+    </lightning-card>
+</template> -->
+<template>
+    <h1 class="slds-text-heading_medium slds-m-around_medium">Selected Object: {selectedObject}</h1>
+    <lightning-card title="CSV Headers Dropdowns" icon-name="custom:custom63">
+        <template for:each={csvHeaders} for:item="header">
+            <c-csv-header-dropdown
+                key={header}
+                header={header}
+                component-name={header}
+                options={fieldOptions}
+                lookup-field-list={fieldsWithLookupList}
+                selected-object={selectedObject}
+                onhandlelookupselection={handleFieldChange}
+                csv-header-options={csvHeaderOptions}
+                >
+            </c-csv-header-dropdown>
+        <hr key={header} style="margin: 0px;"/>
+        </template>
+        
+        <c-csv-dynamic-component
+            csv-header-options={csvHeaderOptions}
+            field-options={fieldOptions}
+            selected-object={selectedObject}
+            lookup-field-list={fieldsWithLookupList}
+
+            onhandlelookupselection={handleFieldChange}>
+        </c-csv-dynamic-component>
+        
+        
+        <lightning-datatable key-field="id" data={tableData} columns={columns} hide-checkbox-column="true" ></lightning-datatable>
+
+    </lightning-card>
+    <lightning-card>
+        
+        <div class="slds-grid slds-grid_align-center slds-m-top_medium">
+            <lightning-button 
+                label="Create Mapping" 
+                onclick={createMapping} 
+                class="slds-button slds-button_brand slds-button_large"
+                 variant="brand">
+            </lightning-button>
+        </div>
+    </lightning-card>
+</template>

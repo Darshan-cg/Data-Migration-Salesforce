@@ -1,0 +1,68 @@
+<template>
+    <lightning-card class = "slds-p-right_medium" title="Import CSV Data">
+        <!-- Object Dropdown -->
+        <lightning-combobox 
+            name="objectDropdown"
+            label="Select Object"
+            value={selectedObject}
+            placeholder="Choose an Object"
+            options={objectOptions}
+            onchange={handleObjectChange}>
+        </lightning-combobox>
+        <!-- Field Selection -->
+         
+        <lightning-dual-listbox
+                label="Select Fields"
+                source-label="Available Fields"
+                selected-label="Selected Fields"
+                options={fieldOptions}
+                value={selectedFields}
+                onchange={handleFieldChange}>
+        </lightning-dual-listbox>
+
+        <lightning-combobox 
+            name="lookupDropdown"
+            label="Select Lookup Field"
+            value={selectedLookupField}
+            placeholder="Choose an Object"
+            options={filteredLookupFields}
+            onchange={handleLookupFieldChange}>
+        </lightning-combobox>
+
+        <lightning-dual-listbox
+                label="Select Unique Identifier Fields"
+                source-label="Available Fields"
+                selected-label="Selected Fields"
+                options={uniqueIdentifierFieldOptions}
+                value={selectedUniqueIdentifierFields}
+                onchange={handleUniqueIdentifierFieldChange}>
+        </lightning-dual-listbox>
+
+        
+
+        <lightning-button 
+            label="Add Unique Identifier" 
+            onclick={addUniqueIdentifierMapping} 
+            class="slds-m-top_medium">
+        </lightning-button>
+
+        <lightning-button 
+            label="Export CSV" 
+            onclick={exportToCSV} 
+            class="slds-m-top_medium">
+        </lightning-button>
+
+        <lightning-button 
+            label="Create Configuration" 
+            onclick={createConfiguration} 
+            class="slds-m-top_medium">
+        </lightning-button>
+
+        <lightning-button 
+            label="Reset" 
+            onclick={resetComponent} 
+            class="slds-m-top_medium">
+        </lightning-button>
+
+    </lightning-card>
+</template>

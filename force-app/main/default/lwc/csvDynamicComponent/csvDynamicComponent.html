@@ -1,0 +1,39 @@
+<template>
+    <div class="slds-m-around_medium">
+            
+        
+        <div class="dynamic-container">
+            
+            <template for:each={components} for:item="component">
+                
+                <lightning-layout key={component.id}>
+                    <lightning-layout-item size="6">
+                        <lightning-combobox  placeholder="Select an option"
+                                        options={csvHeaderOptions}
+                                        value={csvHeaderValue}
+                                        onchange={handleCsvHeaderChange}></lightning-combobox>    
+                    </lightning-layout-item>
+                    <lightning-layout-item size="6"></lightning-layout-item>
+                </lightning-layout>
+                    
+                
+                <template if:true={csvHeaderValue}>
+                    <c-csv-header-dropdown
+                        key={keyValue}
+                        header={csvHeaderValue}
+                        component-name={keyValue}
+                        options={fieldOptions}
+                        lookup-field-list={lookupFieldList}
+                        selected-object={selectedObject}
+                        onhandlelookupselection={handleFieldChange}
+                        csv-header-options={csvHeaderOptions}
+                    >
+                    </c-csv-header-dropdown>
+                </template>
+            </template>
+        </div>
+
+        <lightning-button label="Additional Mapping" onclick={handleAddComponents}></lightning-button>
+    
+</div>
+</template>
