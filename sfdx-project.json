@@ -5,11 +5,7 @@
       "default": true
     }
   ],
-<<<<<<< HEAD
-  "name": "demo",
-=======
   "name": "migration",
->>>>>>> origin/master
   "namespace": "",
   "sfdcLoginUrl": "https://login.salesforce.com",
   "sourceApiVersion": "65.0"
