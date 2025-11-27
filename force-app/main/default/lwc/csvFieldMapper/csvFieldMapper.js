@@ -60,8 +60,11 @@ export default class CsvFieldMapper extends LightningElement {
                 console.log('else  field details:', fieldDetails);
                 this.selectedDropdownValues[index] = { ...this.selectedDropdownValues[index], 
                     selectedField: fieldDetails.selectedValue, 
-                    isLookup: fieldDetails.isLookup
-
+                    isLookup: fieldDetails.isLookup,
+                    lookupObject: undefined,
+                    whereClause: undefined,
+                    selectedLookupFields: undefined,
+                    extraCsvField: undefined
                 };
             }
         }        
