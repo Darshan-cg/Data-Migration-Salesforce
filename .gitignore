@@ -46,11 +46,9 @@ $RECYCLE.BIN/
 **/__pycache__/
 **/.venv/
 **/venv/
-<<<<<<< HEAD
+
 # Ignore all Apex test classes and their metadata
 force-app/main/default/classes/Test_*.cls
 force-app/main/default/classes/Test_*.cls-meta.xml
 # Ignore portfolio LWC component
 force-app/main/default/lwc/portfolio/
-=======
->>>>>>> origin/master
