@@ -1,6 +1,5 @@
 import { api, LightningElement, track } from 'lwc';
 import getFields from '@salesforce/apex/CSVDataController.getFields';
-import getLookupFields from '@salesforce/apex/LookupUtility.getLookupFields';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import createConfiguration from '@salesforce/apex/CSVConfigurationMapping.createConfiguration';
 export default class CsvFieldMapper extends LightningElement {
@@ -34,12 +33,7 @@ export default class CsvFieldMapper extends LightningElement {
         // Get lookup fields for the selected object
         getFields({objectName: this.selectedObject}).then(data => {
             this.fieldsWithLookupList = data.filter(field => field.isLookup).map(field => ({ label: field.label, apiName: field.apiName, isLookup: field.isLookup }));
-<<<<<<< HEAD
-            this.fieldOptions = data.map(field => ({ label: field.label, value: field.apiName }));
-            
-=======
             this.fieldOptions = data.map(field => ({ label: field.label, value: field.apiName }));     
->>>>>>> origin/master
         });
         
         this.csvHeaderOptions = this.csvHeaders.map(item => ({ label: item, value: item }));
@@ -47,18 +41,11 @@ export default class CsvFieldMapper extends LightningElement {
 
     handleFieldChange(event) {
         const fieldDetails = event.detail;
-<<<<<<< HEAD
-        // console.log('Event.isAdditionalFieldMapping:', event.detail.isAdditionalFieldMapping);
-        const index = this.selectedDropdownValues.findIndex(obj => obj.keyField === fieldDetails.keyField);
-         console.log('Index:', index);
-         console.log('Selected dropdown values:', this.selectedDropdownValues);
-=======
         
         // console.log('Event.isAdditionalFieldMapping:', event.detail.isAdditionalFieldMapping);
         const index = this.selectedDropdownValues.findIndex(obj => obj.keyField === fieldDetails.keyField);
         console.log('Index:', index);
         console.log('Selected dropdown values:', this.selectedDropdownValues);
->>>>>>> origin/master
         if (index !== -1) {
             if(fieldDetails.isLookup) {
                 this.selectedDropdownValues[index] = { ...this.selectedDropdownValues[index], 
@@ -77,11 +64,7 @@ export default class CsvFieldMapper extends LightningElement {
 
                 };
             }
-<<<<<<< HEAD
-        }
-=======
         }        
->>>>>>> origin/master
         else if(event.detail.isAdditionalFieldMapping) {
             // console.log('Else condition');
             // console.log('Adding new field details:', fieldDetails);
