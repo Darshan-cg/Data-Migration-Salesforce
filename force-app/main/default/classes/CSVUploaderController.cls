@@ -20,7 +20,11 @@ public without sharing class CSVUploaderController {
     public static void updateDataFeedJobTrackerStatus(String status, String fileName, string operationType, String targetObject) {
         try {
             List<Data_Feed_Job_Tracker__c> jobTrackers = [SELECT Id, Status__c FROM Data_Feed_Job_Tracker__c WHERE File_Name__c = :fileName order by createddate desc LIMIT 1];
+<<<<<<< HEAD
             System.debug('JobTrackers:'+ jobTrackers);
+=======
+            
+>>>>>>> origin/master
             if (jobTrackers.isEmpty()) {
                 Data_feed_Job_Tracker__c newJobTracker = new Data_Feed_Job_Tracker__c();
                 newJobTracker.File_Name__c = fileName;

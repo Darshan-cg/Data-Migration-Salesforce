@@ -43,7 +43,10 @@ export default class CsvHeaderDropdown extends LightningElement {
     }
 
     connectedCallback() {
+<<<<<<< HEAD
         // Initialize any data or state here if needed
+=======
+>>>>>>> origin/master
         this.value = this.header;
         this.configuration = { csvFieldName: this.header, selectedValue: this.value, isLookup: false };
     }
@@ -65,7 +68,11 @@ export default class CsvHeaderDropdown extends LightningElement {
         const selectedLookupMultiSelectValues = event.detail.value;
         const currentLength = selectedLookupMultiSelectValues.length;
         const previousLength = this.selectedUniqueIdentifierFields.length;
+<<<<<<< HEAD
         
+=======
+
+>>>>>>> origin/master
         if(currentLength > previousLength && currentLength > 1) {
             this.AddCsvHeaderDropdown(selectedLookupMultiSelectValues);
         }
