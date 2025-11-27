@@ -7,6 +7,7 @@ export default class CsvHeaderDropdown extends LightningElement {
     @api options;
     @api lookupFieldList = [];
     @api csvHeaderOptions = [];
+    @api isAdditionalMapping = false;
     @track isLookupField = false;
     @track uniqueIdentifierFieldOptions = [];
     @track selectedUniqueIdentifierFields = [];
@@ -44,7 +45,11 @@ export default class CsvHeaderDropdown extends LightningElement {
 
     connectedCallback() {
         this.value = this.header;
-        this.configuration = { csvFieldName: this.header, selectedValue: this.value, isLookup: false };
+        this.configuration = { csvFieldName: this.header, selectedValue: this.value, isLookup: false, keyField: this.componentName, isAdditionalFieldMapping: this.isAdditionalMapping };
+        // Only send data for additional mappings so they appear in the table
+        if(this.isAdditionalMapping) {
+            this.sendDataToParent(this.configuration);
+        }
     }
 
     // Fetch fields for the selected object

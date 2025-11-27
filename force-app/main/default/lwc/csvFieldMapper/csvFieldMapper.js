@@ -41,11 +41,8 @@ export default class CsvFieldMapper extends LightningElement {
 
     handleFieldChange(event) {
         const fieldDetails = event.detail;
-        
-        // console.log('Event.isAdditionalFieldMapping:', event.detail.isAdditionalFieldMapping);
+        console.log('Event.isAdditionalFieldMapping:', event.detail.isAdditionalFieldMapping);
         const index = this.selectedDropdownValues.findIndex(obj => obj.keyField === fieldDetails.keyField);
-        console.log('Index:', index);
-        console.log('Selected dropdown values:', this.selectedDropdownValues);
         if (index !== -1) {
             if(fieldDetails.isLookup) {
                 this.selectedDropdownValues[index] = { ...this.selectedDropdownValues[index], 
@@ -69,8 +66,7 @@ export default class CsvFieldMapper extends LightningElement {
             }
         }        
         else if(event.detail.isAdditionalFieldMapping) {
-            // console.log('Else condition');
-            // console.log('Adding new field details:', fieldDetails);
+            console.log('keyField:', fieldDetails.keyField);
             if(fieldDetails.isLookup) {
                 this.selectedDropdownValues.push({ 
                     fileName: this.fileName, 
@@ -85,6 +81,7 @@ export default class CsvFieldMapper extends LightningElement {
                 });
             } else {
                 this.selectedDropdownValues.push({
+                    fileName: this.fileName,
                     selectedField: fieldDetails.selectedValue, 
                     isLookup: fieldDetails.isLookup,
                     csvFieldName: fieldDetails.csvFieldName,
