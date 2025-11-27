@@ -44,7 +44,6 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
                 //lookupFieldQueryMapping.put(mapping.File_column_Name__c,lookupQuery);
             }*/
     	}
-        
     	public Database.QueryLocator start(Database.BatchableContext context)
         {
             return Database.getQueryLocator([SELECT Id, File_Name__c, Error_Message__c,Data_Feed_Record_JSON__c,Is_Failed__c,Is_Processed__c FROM Data_Feed_Record__c 
@@ -52,7 +51,6 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
             Order by createddate desc
             ]);
         }
-
     	public void execute(Database.BatchableContext context, List<Data_Feed_Record__c> scope)
         {
             /*Map<String,List<SObject>> lookupRecordsMap=new Map<String,List<Sobject>>();
@@ -71,15 +69,13 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
             for (Data_Feed_Record__c d:scope)
             {
                 Map<String,Object> dataFeedRecord=(Map<String,Object>)JSON.deserializeuntyped(d.Data_Feed_Record_JSON__c);
-                dataFeedRecords.add(dataFeedRecord);   
+                dataFeedRecords.add(dataFeedRecord);
+                
             }
-            
             for(Map<String,Object> mp: dataFeedRecords)
             {
                 for(Data_Feed_Mapping__c dfm:lookupMappings)
                 {
-
-                    
                 	if((dfm.file_column_name__c).contains(','))
                     {
                         List<String> multipleLookups=(dfm.file_column_name__c).split(',');
@@ -106,8 +102,6 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
                         	}                               
                         }
                     }
-
-
                     else
                     {
                         if(mp.get(dfm.file_column_name__c)!=null)
@@ -132,9 +126,6 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
                     }
                 }               
             }
-
-
-
             Map<String,Map<String,String>> lookupResultsMap=new Map<String,Map<String,String>>();          
             for(Data_Feed_Mapping__c mapping:lookupMappings)
             {
@@ -363,18 +354,17 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
         update scope;
            
         }
-
         public void finish(Database.BatchableContext context)
         {
             Data_Feed_Job_Tracker__c jobTracker = [SELECT Id, File_Name__c, Operation_Type__c, Target_Object__c, Status__c FROM Data_Feed_Job_Tracker__c WHERE File_Name__c = :fileToBeProcessed order by createddate desc LIMIT 1][0];
             if(jobTracker.Status__c == 'Upload Complete') {
                 jobTracker.Status__c = 'Completed';
                 update jobTracker;
-                CSVUploaderController.invokeProcessDataFeedBatch(jobTracker.File_Name__c, jobTracker.Operation_Type__c, jobTracker.Target_Object__c);
+                //CSVUploaderController.invokeProcessDataFeedBatch(jobTracker.File_Name__c, jobTracker.Operation_Type__c, jobTracker.Target_Object__c);
             }
-            else {
-                jobTracker.Status__c = 'Ready for Processing';
-                update jobTracker;
-            }
+            // else {
+            //     jobTracker.Status__c = 'Ready for Processing';
+            //     update jobTracker;
+            // }
         }
 }

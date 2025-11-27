@@ -2,4 +2,8 @@ trigger DataFeedJobTrigger on Data_Feed_Job_Tracker__c (after insert, after upda
     if (Trigger.isAfter && (Trigger.isInsert || Trigger.isUpdate)) {
         DataFeedJobTrackerTriggerHandler.startBatchProcessor(Trigger.new);
     }
+<<<<<<< HEAD
+
+=======
+>>>>>>> origin/master
 }

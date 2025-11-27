@@ -26,8 +26,6 @@ public with sharing class CSVDataController {
         return result;
     }
 
-    
-
     @AuraEnabled(cacheable=true)
     public static List<FieldDescribe> getFields(String objectName) {
         List<FieldDescribe> result = new List<FieldDescribe>();
@@ -90,7 +88,7 @@ public with sharing class CSVDataController {
                 throw new IllegalArgumentException('Object name and field names cannot be empty.');
             }
 
-        // Build dynamic SOQL query
+            // Build dynamic SOQL query
         String fields = String.join(fieldNames, ',');
         String query = 'SELECT ' + fields + ' FROM ' + objectName;
         

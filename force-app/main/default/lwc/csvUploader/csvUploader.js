@@ -138,9 +138,15 @@ export default class csvUploader extends LightningElement {
         for (let i = 0; i < jsonData.length; i += this.chunkSize) {
             const chunk = jsonData.slice(i, i + this.chunkSize);
 
+<<<<<<< HEAD
+            // if(i === 0) {
+            //     await updateDataFeedJobTrackerStatus({status:'Ready for Processing', fileName:this.fileName, operationType:this.selectedOperation,targetObject:this.selectedObject});
+            // }
+=======
             if(i === 0) {
                 await updateDataFeedJobTrackerStatus({status:'Ready for Processing', fileName:this.fileName, operationType:this.selectedOperation,targetObject:this.selectedObject});
             }
+>>>>>>> origin/master
 
             // Convert each JSON object in the chunk to a JSON string
             const jsonStringList = chunk.map(record => JSON.stringify(record));

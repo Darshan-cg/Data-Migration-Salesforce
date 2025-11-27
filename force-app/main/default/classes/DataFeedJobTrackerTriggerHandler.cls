@@ -5,7 +5,7 @@ public class DataFeedJobTrackerTriggerHandler {
         // The batch will query for all the others.
         Data_Feed_Job_Tracker__c trackerRacord = newRecords[0];
 
-        if(trackerRacord.Status__c == 'Ready for Processing') {
+        if(trackerRacord.Status__c == 'Upload Complete') {
             CSVUploaderController.invokeProcessDataFeedBatch(trackerRacord.File_Name__c, trackerRacord.Operation_Type__c, trackerRacord.Target_Object__c);
         }
     }

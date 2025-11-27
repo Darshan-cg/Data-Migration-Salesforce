@@ -7,7 +7,6 @@ public class FetchAllObjects {
         for (String objectName : allObjects.keySet()) {
             System.debug('Object Name: ' + objectName);
             listOfObjects.add(objectName);
-            
         }
         
         return listOfObjects;
