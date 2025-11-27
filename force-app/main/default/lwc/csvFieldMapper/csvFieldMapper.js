@@ -61,6 +61,10 @@ export default class CsvFieldMapper extends LightningElement {
                 this.selectedDropdownValues[index] = { ...this.selectedDropdownValues[index], 
                     selectedField: fieldDetails.selectedValue, 
                     isLookup: fieldDetails.isLookup,
+                    lookupObject: "",
+                    whereClause: "",
+                    selectedLookupFields: "",
+                    extraCsvField: ""
                 };
             }
         }        
@@ -84,7 +88,11 @@ export default class CsvFieldMapper extends LightningElement {
                     selectedField: fieldDetails.selectedValue, 
                     isLookup: fieldDetails.isLookup,
                     csvFieldName: fieldDetails.csvFieldName,
-                    keyField: fieldDetails.keyField
+                    keyField: fieldDetails.keyField,
+                    whereClause: "",
+                    selectedLookupFields: "",
+                    extraCsvField: "",
+                    lookupObject: "",
                 });
             }
         }
