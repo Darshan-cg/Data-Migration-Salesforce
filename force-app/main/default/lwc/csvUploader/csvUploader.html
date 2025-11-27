@@ -1,0 +1,45 @@
+<template>
+    <template if:true={showImportCard}>
+        <lightning-card class="slds-p-around_medium" title="Import CSV Data">
+            <div>
+                <h1>CSV File Reader</h1>
+                <input type="file" accept=".csv" onchange={handleFileUpload} />
+            </div>
+            <lightning-combobox name="objectDropdown" label="Select Object" value={selectedObject}
+                placeholder="Choose an Object" options={objectOptions} onchange={handleObjectChange} required="true">
+            </lightning-combobox>
+
+            <lightning-combobox name="operationDropdown" label="Select Operation" value={selectedOperation}
+                placeholder="Choose Operation" options={operationOptions} onchange={handleOperationChange} required="true">
+            </lightning-combobox>
+            <template if:true={showNextButton}>
+                <lightning-button class='next-button' label="Next" onclick={handleNextClick}></lightning-button>
+            </template>
+        </lightning-card>
+    </template>
+    <template if:true={showHeaderBlocks}>
+        <lightning-card class="slds-p-around_medium">
+            <c-csv-field-mapper csv-headers={headersArray} selected-object={selectedObject} selected-operation={selectedOperation} file-name={fileName}></c-csv-field-mapper>
+            <!-- <template for:each={headersArray} for:item="header" for:index="index">
+            <lightning-card key={header}>
+                <p>{header}</p>
+            </lightning-card>
+            </template> -->
+            <lightning-button class='next-button' label="Previous" onclick={previousPage}></lightning-button>
+            <lightning-button class='next-button' label="Next" onclick={processCSV}></lightning-button>          
+        </lightning-card>
+    </template>
+    <template if:true={showProgressBar}>
+        <lightning-card class="slds-p-around_medium">
+            <h2 class="slds-text-heading_medium slds-m-around_medium slds-text-align_center"><strong>{message}</strong></h2>
+            <h1 class="slds-text-heading_medium slds-m-around_medium"><strong>Selected Object:</strong> {selectedObject}</h1>
+            <h1 class="slds-text-heading_medium slds-m-around_medium"><strong>File Name:</strong> {fileName}</h1>
+            <h1 class="slds-text-heading_medium slds-m-around_medium"><strong>Selected Operation:</strong> {selectedOperation}</h1>
+
+            <div class="slds-grid slds-grid_vertical-align-center slds-m-top_medium">
+        <lightning-progress-bar value={progressValue} variant="success" class="slds-size_1-of-1"></lightning-progress-bar>
+            </div>
+        <p class="slds-text-align_center">{processedRecords} of {totalRecords} records processed</p>
+    </lightning-card>
+    </template> 
+</template>
