@@ -28,9 +28,7 @@ export default class CsvDynamicComponent extends LightningElement {
         // console.log('csv dynamic Header changed:', event.detail);
         this.csvHeaderValue = event.detail.value;
         this.keyValue = 'extraMapping' + this.csvHeaderValue  + Math.floor(Math.random() * 1000);
-        // console.log('keyValue:', this.keyValue);
-
-    }
+    }   
 
     handleFieldChange(event){
         event.detail.isAdditionalFieldMapping = true;
