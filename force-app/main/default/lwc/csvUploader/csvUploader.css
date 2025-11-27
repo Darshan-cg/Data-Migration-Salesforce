@@ -1,0 +1,24 @@
+/* Custom styles for the card */
+lightning-card {
+    border-radius: 8px;          
+    padding: 2rem;  
+}
+
+div {
+    padding: 1rem;
+}
+
+/* Styling the comboboxes */
+lightning-combobox {
+    padding: 0.5rem 1rem;  
+}
+
+/* Next button custom style */
+.next-button {
+    padding: 2rem 1rem;  
+}
+
+/* Hover effect for the Next button */
+.next-button:hover {
+    cursor: pointer;  
+}

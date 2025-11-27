@@ -1,0 +1,59 @@
+<template>
+    <lightning-layout multiple-rows="false">
+    <lightning-layout-item size="6">
+    <div class="slds-m-around_medium ">
+        <lightning-combobox
+            name={componentName}
+            label={header}
+            placeholder="Select an option"
+            options={options}
+            value={value}
+            onchange={handleChange}>
+        </lightning-combobox>
+    </div>
+    </lightning-layout-item>
+    <lightning-layout-item size="6">
+    <div class="slds-m-around_medium ">
+        <lightning-card lwc:if={configuration} title="">
+            <p> <strong>{configData}</strong></p>
+        </lightning-card>
+    </div>
+    
+    </lightning-layout-item>
+    </lightning-layout>
+    <div class="slds-m-around_medium">
+
+        <template lwc:if={isLookupField}>
+            <lightning-dual-listbox
+                label="Select Unique Identifier Fields"
+                source-label="Available Fields"
+                selected-label="Selected Fields"
+                options={uniqueIdentifierFieldOptions}
+                value={selectedUniqueIdentifierFields}
+                onchange={handleUniqueIdentifierFieldChange}>
+            </lightning-dual-listbox>
+
+            <div>
+                <template lwc:if={isMultipleMappingSelected}>
+                    <div class="dynamic-container">
+                        <template for:each={components} for:item="component">
+                            <lightning-combobox key={component.id} label={component.label} placeholder={component.placeholder}
+                                                    options={csvHeaderOptions}
+                                                    onchange={handleAdditionalCsvFieldChange}></lightning-combobox>
+                        </template>
+                    </div>
+                </template>
+                
+            </div>
+
+
+
+            <lightning-textarea
+                label="Where clause"
+                value={uniqueIdentifierWhereClause}
+                placeholder="Enter where clause">
+            </lightning-textarea>
+        </template>
+    </div>
+    
+</template>
