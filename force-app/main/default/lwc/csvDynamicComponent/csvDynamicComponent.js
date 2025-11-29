@@ -19,15 +19,20 @@ export default class CsvDynamicComponent extends LightningElement {
 
     handleAddComponents() {
         // console.log('Adding components');
-        const newDropdown = { id: `dropdown-${Date.now()}`, isTextbox: false, isDropdown: true };
+        const newDropdown = { id: `dropdown-${Date.now()}`, isTextbox: false, isDropdown: true, keyValue:'', csvHeaderValue:'' };
         
         this.components = [...this.components, newDropdown];
     }
 
     handleCsvHeaderChange(event) {
-        // console.log('csv dynamic Header changed:', event.detail);
-        this.csvHeaderValue = event.detail.value;
-        this.keyValue = 'extraMapping' + this.csvHeaderValue  + Math.floor(Math.random() * 1000);
+        let index = event.target.dataset.index;
+        if (typeof index === 'string') {
+            index = parseInt(index, 10);
+        }
+        const value = event.detail.value;
+        this.components[index].csvHeaderValue = value;
+        this.components[index].keyValue = 'extraMapping' + value + Math.floor(Math.random() * 1000);
+        this.components = [...this.components];
     }   
 
     handleFieldChange(event){

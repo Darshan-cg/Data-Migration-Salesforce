@@ -4,28 +4,30 @@
         
         <div class="dynamic-container">
             
-            <template for:each={components} for:item="component">
+            <template for:each={components} for:item="component" for:index="index">
                 
                 <lightning-layout key={component.id}>
                     <lightning-layout-item size="6">
-                        <lightning-combobox  placeholder="Select an option"
-                                        options={csvHeaderOptions}
-                                        value={csvHeaderValue}
-                                        onchange={handleCsvHeaderChange}></lightning-combobox>    
+                        <lightning-combobox  
+                            data-index={index}
+                            placeholder="Select an option"
+                            options={csvHeaderOptions}
+                            value={component.csvHeaderValue}
+                            onchange={handleCsvHeaderChange}>
+                        </lightning-combobox>    
                     </lightning-layout-item>
                     <lightning-layout-item size="6"></lightning-layout-item>
                 </lightning-layout>
                     
                 
-                <template if:true={csvHeaderValue}>
+                <template if:true={component.csvHeaderValue}>
                     <c-csv-header-dropdown
-                        key={keyValue}
-                        header={csvHeaderValue}
-                        component-name={keyValue}
+                        key={component.keyValue}
+                        header={component.csvHeaderValue}
+                        component-name={component.keyValue}
                         options={fieldOptions}
                         lookup-field-list={lookupFieldList}
                         selected-object={selectedObject}
-                        is-additional-mapping="true"
                         onhandlelookupselection={handleFieldChange}
                         csv-header-options={csvHeaderOptions}
                     >
