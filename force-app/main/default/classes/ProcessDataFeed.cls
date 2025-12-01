@@ -19,11 +19,13 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
         	List<Data_Feed_Mapping__c> mappings = [SELECT File_Name__c, File_Column_Name__c, SObject_API_Name__c, Field_to_update__c, Lookup_Filter_Criteria__c, 
                                                	  Lookup_Object_Name__c, Lookup_Field__c, Lookup_Return_Field__c, Operation__c, Id, Name 
                                                	  FROM Data_Feed_Mapping__c WHERE File_Name__c = :fileName and Operation__c=:operation and SObject_API_Name__c=:targetObject and is_lookup__c=false]; 
-            
+            System.debug(mappings);
             lookupMappings = [SELECT File_Name__c, File_Column_Name__c, SObject_API_Name__c, Field_to_update__c, Lookup_Filter_Criteria__c, 
                                                	  Lookup_Object_Name__c, Lookup_Field__c, Lookup_Return_Field__c, Operation__c, Id, Name 
                                                	  FROM Data_Feed_Mapping__c WHERE File_Name__c = :fileName and Operation__c=:operation and SObject_API_Name__c=:targetObject and is_lookup__c=true]; 
             
+            System.debug(lookupMappings);
+
             for(Data_Feed_Mapping__c mapping:mappings)
             {
                 fieldColumnMapping.put(mapping.File_Column_Name__c,mapping.Field_to_update__c);

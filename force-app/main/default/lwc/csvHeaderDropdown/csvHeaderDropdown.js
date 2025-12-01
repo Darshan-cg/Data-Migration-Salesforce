@@ -2,6 +2,20 @@ import { LightningElement, api, track } from 'lwc';
 import getLookupFields from '@salesforce/apex/LookupUtility.getLookupFieldsWithObjectName';
 
 export default class CsvHeaderDropdown extends LightningElement {
+    @api
+    resetDropdown() {
+        this.value = this.header;
+        this.selectedUniqueIdentifierFields = [];
+        this.isLookupField = false;
+        this.uniqueIdentifierFieldOptions = [];
+        this.uniqueIdentifierWhereClause = '';
+        this.lookupObjectName = '';
+        this.selectedCsvFields = [];
+        this.components = [];
+        this.extraCsvFieldList = [];
+        this.configuration = { csvFieldName: this.header, selectedValue: this.header, isLookup: false, keyField: this.componentName };
+        this.sendDataToParent(this.configuration);
+    }
     @api header;
     @api componentName;
     @api options;

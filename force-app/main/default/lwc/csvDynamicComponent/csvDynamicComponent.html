@@ -16,7 +16,11 @@
                             onchange={handleCsvHeaderChange}>
                         </lightning-combobox>    
                     </lightning-layout-item>
-                    <lightning-layout-item size="6"></lightning-layout-item>
+                    <lightning-layout-item size="6">
+                        <div class="slds-grid slds-grid_align-end slds-m-top_x-small" style="max-width: 80%; margin-right: 2rem;">
+                            <lightning-button label="Delete Mapping" data-index={index} onclick={DeleteComponent}></lightning-button>
+                        </div>
+                    </lightning-layout-item>
                 </lightning-layout>
                     
                 

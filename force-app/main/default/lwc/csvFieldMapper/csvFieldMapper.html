@@ -42,7 +42,8 @@
             field-options={fieldOptions}
             selected-object={selectedObject}
             lookup-field-list={fieldsWithLookupList}
-            onhandlelookupselection={handleFieldChange}>
+            onhandlelookupselection={handleFieldChange}
+            ondeletemapping={handleDeleteMapping}>
         </c-csv-dynamic-component>
         
         
@@ -57,6 +58,10 @@
                 onclick={createMapping} 
                 class="slds-button slds-button_brand slds-button_large"
                  variant="brand">
+            </lightning-button>
+            <lightning-button
+                label = "Reset Mapping"
+                onclick = {handleResetMapping}>
             </lightning-button>
         </div>
     </lightning-card>
