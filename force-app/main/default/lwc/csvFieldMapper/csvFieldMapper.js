@@ -129,7 +129,29 @@ export default class CsvFieldMapper extends LightningElement {
             // this.configuration.mapping.push({ csvFieldName: this.csvHeaders[i], selectedField: this.csvHeaders[i] });
         }
     }
-
+    handleDeleteMapping(event)
+    {
+        const keyField = event.detail.keyField;
+        this.selectedDropdownValues = this.selectedDropdownValues.filter(
+        mapping => mapping.keyField !== keyField
+    );
+    }
+    handleResetMapping()
+    {
+        this.lookupFields = [];
+        this.selectedFields = [];
+        this.selectedDropdownValues = [];
+        this.createInitialCsvMapping();
+        const dropdowns = this.template.querySelectorAll('c-csv-header-dropdown');
+            dropdowns.forEach(dropdown => {
+            dropdown.resetDropdown();
+        });
+        const dynamicComponent = this.template.querySelector('c-csv-dynamic-component');
+        if (dynamicComponent) 
+        {
+            dynamicComponent.resetAllAdditionalMappings();
+        }
+    }
     get tableData(){
         return this.selectedDropdownValues.map(item => item);
     }
