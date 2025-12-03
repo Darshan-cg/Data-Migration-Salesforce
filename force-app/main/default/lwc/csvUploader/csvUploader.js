@@ -38,7 +38,7 @@ export default class csvUploader extends LightningElement {
                 console.error('Error fetching objects:', error);
             });
     }
-    
+ 
     handleFileUpload(event) {
         const file = event.target.files[0];
         console.log('File uploaded:', file);
@@ -116,7 +116,7 @@ export default class csvUploader extends LightningElement {
         this.headersArray = headers;
         const jsonData = [];
         let errorRows = [];
- 
+
         for (let i = 1; i < lines.length; i++) {
             if (lines[i].trim() === '') continue; // Skip empty lines
             const values = this.parseCSVRow(lines[i], headers.length);
@@ -132,7 +132,7 @@ export default class csvUploader extends LightningElement {
             });
             jsonData.push(jsonLine);
         }
- 
+
         if (errorRows.length > 0) {
             const errorMsg = `Error: Missing data in row(s): ${errorRows.join(', ')}. Please check your CSV file.`;
             // Show error toast
@@ -150,7 +150,7 @@ export default class csvUploader extends LightningElement {
         }
         return jsonData;
     }
- 
+
     // Process CSV file
     async processCSV() {
         this.showProgressBar = true;
@@ -178,28 +178,7 @@ export default class csvUploader extends LightningElement {
     previousPage() {
         this.showHeaderBlocks = false;
     }
-
-    parseCSV(csv) {
-        const lines = csv.split('\n');
-        const headers = this.parseCSVHeaders(lines[0]);
-        this.headersArray = headers;
-        const jsonData = [];
  
-        for (let i = 1; i < lines.length; i++) {
-            if (lines[i].trim() === '') continue; // Skip empty lines
-           
-            const values = this.parseCSVRow(lines[i], headers.length);
-            if (values.length === headers.length) {
-                const jsonLine = {};
-                headers.forEach((header, index) => {
-                    jsonLine[header.trim()] = values[index].trim();
-                });
-                jsonData.push(jsonLine);
-            }
-        }
-        return jsonData;
-    }
-   
     parseCSVRow(row, expectedFieldCount) {
         const fields = [];
         let current = '';
@@ -277,4 +256,3 @@ export default class csvUploader extends LightningElement {
         return !this.showHeaderBlocks && !this.showProgressBar;
     }
 }
- 
