@@ -109,17 +109,63 @@ export default class csvUploader extends LightningElement {
         this.showHeaderBlocks = true; // Show the blocks when the Next button is clicked
     }
  
+    // Convert CSV to JSON with validation for missing data
+    parseCSV(csv) {
+        const lines = csv.split('\n');
+        const headers = this.parseCSVHeaders(lines[0]);
+        this.headersArray = headers;
+        const jsonData = [];
+        let errorRows = [];
+
+        for (let i = 1; i < lines.length; i++) {
+            if (lines[i].trim() === '') continue; // Skip empty lines
+            const values = this.parseCSVRow(lines[i], headers.length);
+            // Check for missing data in the row
+            const hasMissing = values.length !== headers.length || values.some(v => v.trim() === '');
+            if (hasMissing) {
+                errorRows.push(i + 1); // CSV rows are 1-indexed (including header)
+                continue;
+            }
+            const jsonLine = {};
+            headers.forEach((header, index) => {
+                jsonLine[header.trim()] = values[index].trim();
+            });
+            jsonData.push(jsonLine);
+        }
+
+        if (errorRows.length > 0) {
+            const errorMsg = `Error: Missing data in row(s): ${errorRows.join(', ')}. Please check your CSV file.`;
+            // Show error toast
+            this.dispatchEvent(
+                new ShowToastEvent({
+                    title: 'CSV Data Error',
+                    message: errorMsg,
+                    variant: 'error',
+                })
+            );
+            // Log error to console
+            console.error(errorMsg);
+            // Prevent further processing by returning null
+            return null;
+        }
+        return jsonData;
+    }
+
     // Process CSV file
     async processCSV() {
-        this.showProgressBar=true;
-        this.showHeaderBlocks=false;
+        this.showProgressBar = true;
+        this.showHeaderBlocks = false;
         if (this.csvFileContent) {
             const jsonData = this.parseCSV(this.csvFileContent); // Parse CSV to JSON
-            try {                
-                await this.sendDataInChunks(jsonData, this.fileName); // Wait for all chunks to be sent                
+            if (!jsonData) {
+                // Error already shown, stop processing
+                this.showProgressBar = false;
+                return;
+            }
+            try {
+                await this.sendDataInChunks(jsonData, this.fileName); // Wait for all chunks to be sent
                 // Invoke the ProcessDataFeed batch class
                 await this.invokeBatchClass();
-               
             } catch (error) {
                 console.error('Error during processing:', error);
             }
@@ -132,27 +178,7 @@ export default class csvUploader extends LightningElement {
     previousPage() {
         this.showHeaderBlocks = false;
     }
-    parseCSV(csv) {
-        const lines = csv.split('\n');
-        const headers = this.parseCSVHeaders(lines[0]);
-        this.headersArray = headers;
-        const jsonData = [];
  
-        for (let i = 1; i < lines.length; i++) {
-            if (lines[i].trim() === '') continue; // Skip empty lines
-           
-            const values = this.parseCSVRow(lines[i], headers.length);
-            if (values.length === headers.length) {
-                const jsonLine = {};
-                headers.forEach((header, index) => {
-                    jsonLine[header.trim()] = values[index].trim();
-                });
-                jsonData.push(jsonLine);
-            }
-        }
-        return jsonData;
-    }
-   
     parseCSVRow(row, expectedFieldCount) {
         const fields = [];
         let current = '';
