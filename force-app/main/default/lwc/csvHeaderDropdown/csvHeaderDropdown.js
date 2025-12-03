@@ -88,7 +88,7 @@ export default class CsvHeaderDropdown extends LightningElement {
         const previousLength = this.selectedUniqueIdentifierFields.length;
         console.log('Previous Length',previousLength);
 
-        if(currentLength > previousLength && currentLength > 1) {
+        if(currentLength > previousLength && currentLength >= 1) {
             this.AddCsvHeaderDropdown(selectedLookupMultiSelectValues);
         }
         else if(currentLength < previousLength) {
@@ -156,7 +156,7 @@ export default class CsvHeaderDropdown extends LightningElement {
     }
 
     get isMultipleMappingSelected() {
-        return this.selectedUniqueIdentifierFields.length > 1;
+        return this.selectedUniqueIdentifierFields.length >= 1;
     }
 
     get configData() {
