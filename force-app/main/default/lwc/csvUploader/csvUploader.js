@@ -39,7 +39,6 @@ export default class csvUploader extends LightningElement {
             });
     }
  
-    // Read CSV file on upload
     handleFileUpload(event) {
         const file = event.target.files[0];
         console.log('File uploaded:', file);
@@ -51,14 +50,35 @@ export default class csvUploader extends LightningElement {
             reader.onload = async () => {
                 this.csvFileContent = reader.result;
                 const lines = this.csvFileContent.split('\n').filter(line => line.trim() !== ''); // Filter out blank rows
-                const headers = lines[0].split(',');
+                const headers = this.parseCSVHeaders(lines[0]); // Use proper CSV parsing
                 this.headersArray = headers;
                 this.totalRecords = lines.length - 1; // Exclude the header row
+                console.log('Parsed headers:', this.headersArray);
             };
             reader.readAsText(file);
         }
     }
+    parseCSVHeaders(headerLine) {
+        const headers = [];
+        let current = '';
+        let insideQuotes = false;
  
+        for (const char of headerLine) {
+            if (char === '"') {
+                // Toggle quote state
+                insideQuotes = !insideQuotes;
+            } else if (char === ',' && !insideQuotes) {
+                // Comma outside quotes = field separator
+                headers.push(current.trim());
+                current = '';
+            } else {
+                current += char;
+            }
+        }
+            headers.push(current.trim());
+ 
+        return headers;
+    }
     // Handle object selection
     handleObjectChange(event) {
         this.ObjectIsSelected=true;
@@ -112,16 +132,16 @@ export default class csvUploader extends LightningElement {
     previousPage() {
         this.showHeaderBlocks = false;
     }
- 
-    //Convert CSV to JSON
     parseCSV(csv) {
         const lines = csv.split('\n');
-        const headers = lines[0].split(',');
+        const headers = this.parseCSVHeaders(lines[0]);
         this.headersArray = headers;
         const jsonData = [];
  
         for (let i = 1; i < lines.length; i++) {
-            const values = lines[i].split(',');
+            if (lines[i].trim() === '') continue; // Skip empty lines
+           
+            const values = this.parseCSVRow(lines[i], headers.length);
             if (values.length === headers.length) {
                 const jsonLine = {};
                 headers.forEach((header, index) => {
@@ -132,6 +152,36 @@ export default class csvUploader extends LightningElement {
         }
         return jsonData;
     }
+   
+    parseCSVRow(row, expectedFieldCount) {
+        const fields = [];
+        let current = '';
+        let insideQuotes = false;
+ 
+        for (let i = 0; i < row.length; i++) {
+            const char = row[i];
+ 
+            if (char === '"') {
+                // Toggle quote state
+                insideQuotes = !insideQuotes;
+            } else if (char === ',' && !insideQuotes) {
+                // Comma outside quotes = field separator
+                fields.push(current.trim());
+                current = '';
+            } else {
+                current += char;
+            }
+        }
+ 
+        // Add the last field
+        if (current.length > 0) {
+            fields.push(current.trim());
+        }
+ 
+        return fields;
+    }
+   
+ 
  
     // Send data to Apex in chunks
     async sendDataInChunks(jsonData, fileName) {
@@ -180,4 +230,3 @@ export default class csvUploader extends LightningElement {
         return !this.showHeaderBlocks && !this.showProgressBar;
     }
 }
- 
