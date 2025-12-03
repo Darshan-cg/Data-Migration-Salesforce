@@ -39,25 +39,6 @@ export default class csvUploader extends LightningElement {
             });
     }
  
-    // Read CSV file on upload
-    // handleFileUpload(event) {
-    //     const file = event.target.files[0];
-    //     console.log('File uploaded:', file);
-    //     this.fileName = file.name;
-    //     if (file) {
-    //         const reader = new FileReader();
- 
-    //         // Read the file asynchronously
-    //         reader.onload = async () => {
-    //             this.csvFileContent = reader.result;
-    //             const lines = this.csvFileContent.split('\n').filter(line => line.trim() !== ''); // Filter out blank rows
-    //             const headers = lines[0].split(',');
-    //             this.headersArray = headers;
-    //             this.totalRecords = lines.length - 1; // Exclude the header row
-    //         };
-    //         reader.readAsText(file);
-    //     }
-    // }
     handleFileUpload(event) {
         const file = event.target.files[0];
         console.log('File uploaded:', file);
@@ -151,26 +132,6 @@ export default class csvUploader extends LightningElement {
     previousPage() {
         this.showHeaderBlocks = false;
     }
- 
-    //Convert CSV to JSON
-    // parseCSV(csv) {
-    //     const lines = csv.split('\n');
-    //     const headers = lines[0].split(',');
-    //     this.headersArray = headers;
-    //     const jsonData = [];
- 
-    //     for (let i = 1; i < lines.length; i++) {
-    //         const values = lines[i].split(',');
-    //         if (values.length === headers.length) {
-    //             const jsonLine = {};
-    //             headers.forEach((header, index) => {
-    //                 jsonLine[header.trim()] = values[index].trim();
-    //             });
-    //             jsonData.push(jsonLine);
-    //         }
-    //     }
-    //     return jsonData;
-    // }
     parseCSV(csv) {
         const lines = csv.split('\n');
         const headers = this.parseCSVHeaders(lines[0]);
@@ -227,9 +188,9 @@ export default class csvUploader extends LightningElement {
         for (let i = 0; i < jsonData.length; i += this.chunkSize) {
             const chunk = jsonData.slice(i, i + this.chunkSize);
  
-            if(i === 0) {
-                await updateDataFeedJobTrackerStatus({status:'Ready for Processing', fileName:this.fileName, operationType:this.selectedOperation,targetObject:this.selectedObject});
-            }
+            // if(i === 0) {
+            //     await updateDataFeedJobTrackerStatus({status:'Ready for Processing', fileName:this.fileName, operationType:this.selectedOperation,targetObject:this.selectedObject});
+            // }
  
             // Convert each JSON object in the chunk to a JSON string
             const jsonStringList = chunk.map(record => JSON.stringify(record));
