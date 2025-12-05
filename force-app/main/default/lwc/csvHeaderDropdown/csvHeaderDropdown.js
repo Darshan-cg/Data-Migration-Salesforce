@@ -171,4 +171,19 @@ export default class CsvHeaderDropdown extends LightningElement {
         }
         return configDataString;
     }
+    
+    handleWhereClauseChange(event) {
+    this.uniqueIdentifierWhereClause = event.target.value;
+    const selectedfieldAsString = this.selectedUniqueIdentifierFields.join(',');
+    this.configuration = { 
+        csvFieldName: this.header, 
+        selectedValue: this.value, 
+        isLookup: this.isLookupField, 
+        whereClause: this.uniqueIdentifierWhereClause,
+        lookupObjectName: this.lookupObjectName,
+        selectedLookupFieldValues: selectedfieldAsString,
+        keyField: this.componentName,
+    };
+    this.sendDataToParent(this.configuration);
+}
 }

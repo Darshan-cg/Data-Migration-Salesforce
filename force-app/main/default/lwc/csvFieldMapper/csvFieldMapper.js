@@ -24,7 +24,8 @@ export default class CsvFieldMapper extends LightningElement {
         { label: 'Csv Column', fieldName: 'csvFieldName' },
         { label: 'SF Field', fieldName: 'selectedField' },
         { label: 'Lookup Object', fieldName: 'lookupObject' },
-        { label: 'Selected Lookup Mapping', fieldName: 'selectedLookupFields' }
+        { label: 'Selected Lookup Mapping', fieldName: 'selectedLookupFields' },
+        { label: 'Where Clause', fieldName: 'whereClause'}
     ];
 
     connectedCallback() {
