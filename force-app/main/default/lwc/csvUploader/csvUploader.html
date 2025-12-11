@@ -12,6 +12,7 @@
             <lightning-combobox name="operationDropdown" label="Select Operation" value={selectedOperation}
                 placeholder="Choose Operation" options={operationOptions} onchange={handleOperationChange} required="true">
             </lightning-combobox>
+
             <template if:true={showNextButton}>
                 <lightning-button class='next-button' label="Next" onclick={handleNextClick}></lightning-button>
             </template>

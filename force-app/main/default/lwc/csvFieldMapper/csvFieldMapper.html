@@ -21,12 +21,14 @@
 </template> -->
 <template>
     <h1 class="slds-text-heading_medium slds-m-around_medium">Selected Object: {selectedObject}</h1>
+  
+    
     <lightning-card title="CSV Headers Dropdowns" icon-name="custom:custom63">
-        <template for:each={csvHeaders} for:item="header">
+        <template for:each={allHeaderOptions} for:item="column">
             <c-csv-header-dropdown
-                key={header}
-                header={header}
-                component-name={header}
+                key={column.value}
+                header={column.label}
+                component-name={column.value}
                 options={fieldOptions}
                 lookup-field-list={fieldsWithLookupList}
                 selected-object={selectedObject}
@@ -34,7 +36,7 @@
                 csv-header-options={csvHeaderOptions}
                 >
             </c-csv-header-dropdown>
-        <hr key={header} style="margin: 0px;"/>
+        <hr key={column.value} style="margin: 0px;"/>
         </template>
         
         <c-csv-dynamic-component
@@ -47,9 +49,99 @@
         </c-csv-dynamic-component>
         
         
+          
+    <!-- Composite Mapping Configuration Section -->
+    <lightning-card title="Create Composite Lookup Mappings" icon-name="custom:custom63" class="slds-m-around_medium">
+        <p class="slds-p-around_small slds-text-body_small">Combine multiple columns to create unique composite keys for duplicate prevention (optional)</p>
+        
+        <!-- Available Columns Section -->
+        <div class="columns-selector-section slds-box slds-p-around_small slds-m-bottom_medium">
+            <h3 class="slds-text-heading_small slds-m-bottom_small">Available CSV Columns:</h3>
+            <div class="columns-list">
+                <template for:each={availableColumnsForComposite} for:item="column">
+                    <label key={column.value} class="slds-checkbox_label">
+                        <input 
+                            type="checkbox" 
+                            class="slds-checkbox__input" 
+                            data-column={column.value}
+                            onchange={handleColumnCheckboxChange}
+                            checked={column.isSelected}>
+                        <span class="slds-checkbox_faux"></span>
+                        <span class="slds-form-element__label">{column.label}</span>
+                    </label>
+                </template>
+            </div>
+            
+            <!-- Selected Columns Display -->
+            <template if:true={hasSelectedColumns}>
+                <div class="selected-columns-display slds-m-top_medium">
+                    <p class="slds-text-body_small"><strong>Selected Columns:</strong></p>
+                    <div class="selected-columns-chips">
+                        <template for:each={selectedColumns} for:item="column" for:index="index">
+                            <span key={column} class="column-chip slds-badge">
+                                {column}
+                                <button 
+                                    type="button" 
+                                    class="remove-column-btn" 
+                                    data-column={column}
+                                    onclick={handleRemoveSelectedColumn}
+                                    title="Remove {column}">
+                                    ×
+                                </button>
+                            </span>
+                        </template>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Create Mapping Button -->
+            <lightning-button 
+                variant="brand" 
+                label="Create Composite Mapping" 
+                onclick={handleCreateCompositeMapping}
+                disabled={isCreateMappingDisabled}
+                class="slds-m-top_small">
+            </lightning-button>
+        </div>
+
+        <!-- Created Composite Mappings Display Section -->
+        <template if:true={hasCompositeMappings}>
+            <div class="mappings-display-section slds-m-bottom_medium">
+                <h3 class="slds-text-heading_small slds-m-bottom_small">Created Composite Mappings:</h3>
+                <template for:each={createdCompositeMappings} for:item="mapping" for:index="index">
+                    <div key={mapping.id} class="composite-mapping-card slds-box slds-p-around_small slds-m-bottom_small">
+                        <div class="slds-grid slds-grid_vertical-align-center">
+                            <div class="slds-col slds-size_11-of-12">
+                                <p class="slds-text-body_small slds-m-bottom_none">
+                                    <strong>Mapping {index}: </strong>
+                                </p>
+                                <p class="mapping-columns slds-text-body_small slds-m-bottom_none">
+                                    {mapping.compositeKey}
+                                </p>
+                            </div>
+                            <div class="slds-col slds-size_1-of-12 slds-text-align_right">
+                                <lightning-button-icon 
+                                    icon-name="utility:delete" 
+                                    alternative-text="Delete" 
+                                    title="Delete this mapping"
+                                    onclick={handleDeleteCompositeMapping}
+                                    data-id={mapping.id}
+                                    class="delete-button">
+                                </lightning-button-icon>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </lightning-card>
+
+    <hr class="slds-m-vertical_medium" />
+
         <lightning-datatable key-field="id" data={tableData} columns={columns} hide-checkbox-column="true" ></lightning-datatable>
 
     </lightning-card>
+
     <lightning-card>
         
         <div class="slds-grid slds-grid_align-center slds-m-top_medium">

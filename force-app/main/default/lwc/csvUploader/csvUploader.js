@@ -6,7 +6,7 @@ import getObjects from '@salesforce/apex/CSVDataController.getObjects';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
  
 export default class csvUploader extends LightningElement {
-    chunkSize = 9000; // Number of rows to send in each chunk
+    chunkSize = 200; // Number of rows to send in each chunk
     @track csvFileContent = null;
     @track objectOptions = [];
     @track operationOptions = [];
@@ -59,6 +59,7 @@ export default class csvUploader extends LightningElement {
         }
     }
     parseCSVHeaders(headerLine) {
+        console.log(headerLine);
         const headers = [];
         let current = '';
         let insideQuotes = false;
@@ -133,21 +134,7 @@ export default class csvUploader extends LightningElement {
             jsonData.push(jsonLine);
         }
 
-        if (errorRows.length > 0) {
-            const errorMsg = `Error: Missing data in row(s): ${errorRows.join(', ')}. Please check your CSV file.`;
-            // Show error toast
-            this.dispatchEvent(
-                new ShowToastEvent({
-                    title: 'CSV Data Error',
-                    message: errorMsg,
-                    variant: 'error',
-                })
-            );
-            // Log error to console
-            console.error(errorMsg);
-            // Prevent further processing by returning null
-            return null;
-        }
+        
         return jsonData;
     }
 
