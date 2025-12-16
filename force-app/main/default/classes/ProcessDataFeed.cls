@@ -72,8 +72,8 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
             {
                 Map<String,Object> dataFeedRecord=(Map<String,Object>)JSON.deserializeuntyped(d.Data_Feed_Record_JSON__c);
                 dataFeedRecords.add(dataFeedRecord);
-                
             }
+
             for(Map<String,Object> mp: dataFeedRecords)
             {
                 for(Data_Feed_Mapping__c dfm:lookupMappings)
@@ -104,6 +104,8 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
                         	}                               
                         }
                     }
+
+
                     else
                     {
                         if(mp.get(dfm.file_column_name__c)!=null)
@@ -128,6 +130,8 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
                     }
                 }               
             }
+
+
             Map<String,Map<String,String>> lookupResultsMap=new Map<String,Map<String,String>>();          
             for(Data_Feed_Mapping__c mapping:lookupMappings)
             {
@@ -195,6 +199,8 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
                     }
                     System.debug('lookupQuery'+lookupQuery);
                 }
+
+
                 List<SObject> lookupRecords = Database.query(lookupQuery);                    
                 for(Sobject s:lookupRecords)
                 {
@@ -248,6 +254,8 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
                     }
                 }
             }
+
+
             for (Data_Feed_Record__c d:scope)
             {
                 try
@@ -266,9 +274,9 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
                         {
                             System.debug('lookupColumnMapping.get(key)'+lookupColumnMapping.get(key));
                             System.debug('(lookupResultsMap.get(key)).get(String.valueof(dataFeedRecord.get(key)))'+(lookupResultsMap.get(key)).get(String.valueof(dataFeedRecord.get(key))));
-                            targetRecord.put(lookupColumnMapping.get(key),(lookupResultsMap.get(key)).get(String.valueof(dataFeedRecord.get(key))));   
-                            
+                            targetRecord.put(lookupColumnMapping.get(key),(lookupResultsMap.get(key)).get(String.valueof(dataFeedRecord.get(key))));    
                         }
+
                         for(String compositeKey:lookupColumnMapping.keyset())
                         {
                             if(compositeKey.contains(key) && compositeKey.contains(','))
@@ -341,6 +349,7 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
                     }
                 }
         	}
+            
         // Now, update the original Data_Feed_Record__c records with status and any errors
         for (Data_Feed_Record__c dfr : scope) {
             dfr.Is_Processed__c = true; // Mark as processed regardless of outcome
@@ -358,10 +367,51 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
         }
         public void finish(Database.BatchableContext context)
         {
-            Data_Feed_Job_Tracker__c jobTracker = [SELECT Id, File_Name__c, Operation_Type__c, Target_Object__c, Status__c FROM Data_Feed_Job_Tracker__c WHERE File_Name__c = :fileToBeProcessed order by createddate desc LIMIT 1][0];
+            Data_Feed_Job_Tracker__c jobTracker = [SELECT Id, File_Name__c, Operation_Type__c, Target_Object__c, Status__c, CreatedBy.Email FROM Data_Feed_Job_Tracker__c WHERE File_Name__c = :fileToBeProcessed order by createddate desc LIMIT 1][0];
             if(jobTracker.Status__c == 'Upload Complete') {
                 jobTracker.Status__c = 'Completed';
                 update jobTracker;
+
+                // Prepare counts for the email
+                Integer totalRecords = [SELECT count() FROM Data_Feed_Record__c WHERE File_Name__c = :fileToBeProcessed];
+                Integer processedRecords = [SELECT count() FROM Data_Feed_Record__c WHERE File_Name__c = :fileToBeProcessed AND Is_Processed__c = true];
+
+                // Cannot filter on long text area fields in SOQL (Error_Message__c), so query processed records
+                // and count non-blank Error_Message__c values in Apex.
+                Integer failedRecords = 0;
+                for (Data_Feed_Record__c rec : [SELECT Error_Message__c FROM Data_Feed_Record__c WHERE File_Name__c = :fileToBeProcessed AND Is_Processed__c = true]) {
+                    if (rec.Error_Message__c != null && rec.Error_Message__c.trim().length() > 0) {
+                        failedRecords++;
+                    }
+                }
+
+                try {
+                    List<String> toAddresses = new List<String>();
+                    if (jobTracker.CreatedBy != null && String.isNotBlank(jobTracker.CreatedBy.Email)) {
+                        toAddresses.add(jobTracker.CreatedBy.Email);
+                    }
+                    System.debug('toAddresses: ' + toAddresses);
+                    if (!toAddresses.isEmpty()) {
+                        Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
+                        mail.setToAddresses(toAddresses);
+                        String subject = 'Data Feed Processing Completed: ' + jobTracker.File_Name__c;
+                        String body = 'Hello,\n\nThe data feed file "' + jobTracker.File_Name__c + '" has finished processing.\n\n' +
+                                      'Operation: ' + jobTracker.Operation_Type__c + '\n' +
+                                      'Target Object: ' + jobTracker.Target_Object__c + '\n' +
+                                      'Total Records: ' + totalRecords + '\n' +
+                                      'Processed Records: ' + processedRecords + '\n' +
+                                      'Successful Records: ' + (processedRecords - failedRecords) + '\n' +
+                                      'Failed Records: ' + failedRecords + '\n\n' +
+                                       'You can review the Data Feed Job Tracker records and any error messages in Salesforce.\n\n' +
+                                      'Regards,\nYour Salesforce Data Importer';
+                        mail.setSubject(subject);
+                        mail.setPlainTextBody(body);
+                        Messaging.sendEmail(new Messaging.SingleEmailMessage[] { mail });
+                    }
+                } catch (Exception e) {
+                    System.debug('Failed to send completion email: ' + e.getMessage());
+                }
+
                 //CSVUploaderController.invokeProcessDataFeedBatch(jobTracker.File_Name__c, jobTracker.Operation_Type__c, jobTracker.Target_Object__c);
             }
             // else {
