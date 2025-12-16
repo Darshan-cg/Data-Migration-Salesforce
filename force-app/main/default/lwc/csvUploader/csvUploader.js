@@ -143,9 +143,28 @@ export default class csvUploader extends LightningElement {
         this.showProgressBar = true;
         this.showHeaderBlocks = false;
         if (this.csvFileContent) {
-            const jsonData = this.parseCSV(this.csvFileContent); // Parse CSV to JSON
-            if (!jsonData) {
-                // Error already shown, stop processing
+            console.log('Attempting to upload file to S3:', this.fileName);
+            let uploadSuccess = false;
+            try {
+                // Get pre-signed URL from Apex
+                const presignedUrl = await getPresignedUrl({ fileName: this.fileName });
+                // Upload file to S3 using fetch
+                console.log('Presigned URL:', presignedUrl);
+                const uploadResponse = await fetch(presignedUrl, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'text/csv' },
+                    body: new Blob([this.csvFileContent], { type: 'text/csv' })
+                });
+                if (uploadResponse.ok) {
+                    console.log('File sent to S3 successfully:', this.fileName);
+                    uploadSuccess = true;
+                } else {
+                    console.error('Error uploading file to S3:', uploadResponse.statusText);
+                }
+            } catch (error) {
+                console.error('Error uploading file to S3:', error);
+            }
+            if (!uploadSuccess) {
                 this.showProgressBar = false;
                 return;
             }

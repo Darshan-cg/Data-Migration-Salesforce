@@ -45,5 +45,28 @@ public without sharing class CSVUploaderController {
     public static void invokeProcessDataFeedBatch(String fileName, String operationType, String targetObject) {
         Database.executeBatch(new ProcessDataFeed(fileName, operationType, targetObject), 200);
     }
+
+    @AuraEnabled
+    public static String getPresignedUrl(String fileName) {
+        try {
+            HttpRequest req = new HttpRequest();
+            req.setEndpoint('callout:AWS_API/getPresignedUrl');
+            req.setMethod('POST');
+            req.setHeader('Content-Type', 'application/json');
+            req.setBody(JSON.serialize(new Map<String, Object>{'fileName' => fileName}));
+            HttpResponse res = (new Http()).send(req);
+            Map<String, Object> result = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
+            System.debug(result);
+            if (result.containsKey('presignedUrl')) 
+            {
+                String url = (String) result.get('presignedUrl');
+                System.debug(url);
+                return url;
+            }
+            throw new AuraHandledException('Presigned URL not found in response');
+        } catch(Exception e) {
+            throw new AuraHandledException('Error getting presigned URL: ' + e.getMessage());
+        }
+    }
     
 }
