@@ -3,10 +3,11 @@ import uploadToApex from '@salesforce/apex/CSVUploaderController.uploadToApex';
 import updateDataFeedJobTrackerStatus from '@salesforce/apex/CSVUploaderController.updateDataFeedJobTrackerStatus';
 import invokeProcessDataFeedBatch from '@salesforce/apex/CSVUploaderController.invokeProcessDataFeedBatch';
 import getObjects from '@salesforce/apex/CSVDataController.getObjects';
+import getPresignedUrl from '@salesforce/apex/CSVUploaderController.getPresignedUrl';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
  
 export default class csvUploader extends LightningElement {
-    chunkSize = 200; // Number of rows to send in each chunk
+    chunkSize = 9000; // Number of rows to send in each chunk
     @track csvFileContent = null;
     @track objectOptions = [];
     @track operationOptions = [];
@@ -39,27 +40,90 @@ export default class csvUploader extends LightningElement {
             });
     }
  
+    // Convert CSV to JSON with validation for missing data
+    parseCSV(csv) {
+        const lines = csv.split('\n');
+        const headers = this.parseCSVHeaders(lines[0]);
+        this.headersArray = headers;
+        const jsonData = [];
+        let errorRows = [];
+ 
+        for (let i = 1; i < lines.length; i++) {
+            if (lines[i].trim() === '') continue; // Skip empty lines
+            const values = this.parseCSVRow(lines[i], headers.length);
+            // Check for missing data in the row
+            const hasMissing = values.length !== headers.length || values.some(v => v.trim() === '');
+            if (hasMissing) {
+                errorRows.push(i + 1); // CSV rows are 1-indexed (including header)
+                continue;
+            }
+            const jsonLine = {};
+            headers.forEach((header, index) => {
+                jsonLine[header.trim()] = values[index].trim();
+            });
+            jsonData.push(jsonLine);
+        }
+ 
+        if (errorRows.length > 0) {
+            const errorMsg = `Error: Missing data in row(s): ${errorRows.join(', ')}. Please check your CSV file.`;
+            // Show error toast
+            this.dispatchEvent(
+                new ShowToastEvent({
+                    title: 'CSV Data Error',
+                    message: errorMsg,
+                    variant: 'error',
+                })
+            );
+            // Log error to console
+            console.error(errorMsg);
+            // Prevent further processing by returning null
+            return null;
+        }
+        return jsonData;
+    }
+ 
+    // Helper to parse a CSV row into values, handling quoted fields
+    parseCSVRow(row, expectedLength) {
+        const result = [];
+        let current = '';
+        let insideQuotes = false;
+        for (let i = 0; i < row.length; i++) {
+            const char = row[i];
+            if (char === '"') {
+                insideQuotes = !insideQuotes;
+            } else if (char === ',' && !insideQuotes) {
+                result.push(current);
+                current = '';
+            } else {
+                current += char;
+            }
+        }
+        result.push(current);
+        // Pad with empty strings if row is short
+        while (result.length < expectedLength) {
+            result.push('');
+        }
+        return result;
+    }
+ 
     handleFileUpload(event) {
         const file = event.target.files[0];
         console.log('File uploaded:', file);
         this.fileName = file.name;
         if (file) {
             const reader = new FileReader();
- 
-            // Read the file asynchronously
             reader.onload = async () => {
                 this.csvFileContent = reader.result;
-                const lines = this.csvFileContent.split('\n').filter(line => line.trim() !== ''); // Filter out blank rows
-                const headers = this.parseCSVHeaders(lines[0]); // Use proper CSV parsing
+                const lines = this.csvFileContent.split('\n').filter(line => line.trim() !== '');
+                const headers = this.parseCSVHeaders(lines[0]);
                 this.headersArray = headers;
-                this.totalRecords = lines.length - 1; // Exclude the header row
+                this.totalRecords = lines.length - 1;
                 console.log('Parsed headers:', this.headersArray);
             };
             reader.readAsText(file);
         }
     }
     parseCSVHeaders(headerLine) {
-        console.log(headerLine);
         const headers = [];
         let current = '';
         let insideQuotes = false;
@@ -107,42 +171,37 @@ export default class csvUploader extends LightningElement {
  
     // Handle navigation to next page
     handleNextClick() {
-        this.showHeaderBlocks = true; // Show the blocks when the Next button is clicked
+        // Wait for next tick to ensure child is rendered
+        setTimeout(() => {
+            const fieldMapper = this.template.querySelector('c-csv-field-mapper');
+            if (fieldMapper && typeof fieldMapper.validateMapping === 'function') {
+                const isValid = fieldMapper.validateMapping();
+                if (!isValid) {
+                    // Do not proceed if mapping is invalid
+                    return;
+                }
+            }
+            this.showHeaderBlocks = true;
+        }, 0);
     }
  
-    // Convert CSV to JSON with validation for missing data
-    parseCSV(csv) {
-        const lines = csv.split('\n');
-        const headers = this.parseCSVHeaders(lines[0]);
-        this.headersArray = headers;
-        const jsonData = [];
-        let errorRows = [];
-
-        for (let i = 1; i < lines.length; i++) {
-            if (lines[i].trim() === '') continue; // Skip empty lines
-            const values = this.parseCSVRow(lines[i], headers.length);
-            // Check for missing data in the row
-            const hasMissing = values.length !== headers.length || values.some(v => v.trim() === '');
-            if (hasMissing) {
-                errorRows.push(i + 1); // CSV rows are 1-indexed (including header)
-                continue;
-            }
-            const jsonLine = {};
-            headers.forEach((header, index) => {
-                jsonLine[header.trim()] = values[index].trim();
-            });
-            jsonData.push(jsonLine);
-        }
-
-        
-        return jsonData;
-    }
-
     // Process CSV file
     async processCSV() {
+        // Validate mapping before processing
+        const fieldMapper = this.template.querySelector('c-csv-field-mapper');
+        if (fieldMapper && typeof fieldMapper.validateMapping === 'function') {
+            const isValid = fieldMapper.validateMapping();
+            if (!isValid) {
+                // Do not proceed if mapping is invalid
+                this.showHeaderBlocks = true; // Keep mapping UI visible
+                this.showProgressBar = false;
+                return;
+            }
+        }
         this.showProgressBar = true;
         this.showHeaderBlocks = false;
         if (this.csvFileContent) {
+            // S3 upload logic
             console.log('Attempting to upload file to S3:', this.fileName);
             let uploadSuccess = false;
             try {
@@ -168,6 +227,8 @@ export default class csvUploader extends LightningElement {
                 this.showProgressBar = false;
                 return;
             }
+
+            const jsonData = this.parseCSV(this.csvFileContent); // Parse CSV to JSON
             try {
                 await this.sendDataInChunks(jsonData, this.fileName); // Wait for all chunks to be sent
                 // Invoke the ProcessDataFeed batch class
@@ -184,7 +245,27 @@ export default class csvUploader extends LightningElement {
     previousPage() {
         this.showHeaderBlocks = false;
     }
+    parseCSV(csv) {
+        const lines = csv.split('\n');
+        const headers = this.parseCSVHeaders(lines[0]);
+        this.headersArray = headers;
+        const jsonData = [];
  
+        for (let i = 1; i < lines.length; i++) {
+            if (lines[i].trim() === '') continue; // Skip empty lines
+           
+            const values = this.parseCSVRow(lines[i], headers.length);
+            if (values.length === headers.length) {
+                const jsonLine = {};
+                headers.forEach((header, index) => {
+                    jsonLine[header.trim()] = values[index].trim();
+                });
+                jsonData.push(jsonLine);
+            }
+        }
+        return jsonData;
+    }
+   
     parseCSVRow(row, expectedFieldCount) {
         const fields = [];
         let current = '';
