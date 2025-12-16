@@ -1,6 +1,7 @@
 import { LightningElement, track } from 'lwc';
 import uploadToApex from '@salesforce/apex/CSVUploaderController.uploadToApex';
 import updateDataFeedJobTrackerStatus from '@salesforce/apex/CSVUploaderController.updateDataFeedJobTrackerStatus';
+import getPresignedUrl from '@salesforce/apex/CSVUploaderController.getPresignedUrl';
 import invokeProcessDataFeedBatch from '@salesforce/apex/CSVUploaderController.invokeProcessDataFeedBatch';
 import getObjects from '@salesforce/apex/CSVDataController.getObjects';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
@@ -117,7 +118,7 @@ export default class csvUploader extends LightningElement {
         this.headersArray = headers;
         const jsonData = [];
         let errorRows = [];
-
+ 
         for (let i = 1; i < lines.length; i++) {
             if (lines[i].trim() === '') continue; // Skip empty lines
             const values = this.parseCSVRow(lines[i], headers.length);
@@ -133,11 +134,11 @@ export default class csvUploader extends LightningElement {
             });
             jsonData.push(jsonLine);
         }
-
-        
+ 
+       
         return jsonData;
     }
-
+ 
     // Process CSV file
     async processCSV() {
         this.showProgressBar = true;
@@ -149,7 +150,7 @@ export default class csvUploader extends LightningElement {
                 // Get pre-signed URL from Apex
                 const presignedUrl = await getPresignedUrl({ fileName: this.fileName });
                 // Upload file to S3 using fetch
-                console.log('Presigned URL:', presignedUrl);
+                //console.log('Presigned URL:', presignedUrl);
                 const uploadResponse = await fetch(presignedUrl, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'text/csv' },
@@ -165,6 +166,12 @@ export default class csvUploader extends LightningElement {
                 console.error('Error uploading file to S3:', error);
             }
             if (!uploadSuccess) {
+                this.showProgressBar = false;
+                return;
+            }
+            const jsonData = this.parseCSV(this.csvFileContent); // Parse CSV to JSON
+            if (!jsonData) {
+                // Error already shown, stop processing
                 this.showProgressBar = false;
                 return;
             }
@@ -262,3 +269,4 @@ export default class csvUploader extends LightningElement {
         return !this.showHeaderBlocks && !this.showProgressBar;
     }
 }
+ 
