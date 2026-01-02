@@ -1,47 +1,74 @@
 <template>
-    <div class="slds-m-around_medium">
-            
+    <div class="slds-m-vertical_large additional-mapping-section">
         
+        <!-- Section Header with bottom margin -->
+        <div class="slds-section slds-is-open slds-m-bottom_medium">
+            <h3 class="slds-section__title slds-theme_shade">
+                <span class="slds-truncate slds-p-horizontal_small" title="Additional Mappings">
+                    <strong>Additional Mappings</strong>
+                </span>
+            </h3>
+        </div>
+
         <div class="dynamic-container">
-            
             <template for:each={components} for:item="component" for:index="index">
-                
-                <lightning-layout key={component.id}>
-                    <lightning-layout-item size="6">
-                        <lightning-combobox  
-                            data-index={index}
-                            placeholder="Select an option"
-                            options={csvHeaderOptions}
-                            value={component.csvHeaderValue}
-                            onchange={handleCsvHeaderChange}>
-                        </lightning-combobox>    
-                    </lightning-layout-item>
-                    <lightning-layout-item size="6">
-                        <div class="slds-grid slds-grid_align-end slds-m-top_x-small" style="max-width: 80%; margin-right: 2rem;">
-                            <lightning-button label="Delete Mapping" data-index={index} onclick={DeleteComponent}></lightning-button>
-                        </div>
-                    </lightning-layout-item>
-                </lightning-layout>
+                <!-- Changed slds-m-bottom_small to slds-m-bottom_medium -->
+                <div key={component.id} class="mapping-card slds-m-bottom_medium slds-p-around_medium">
                     
-                
-                <template if:true={component.csvHeaderValue}>
-                    <c-csv-header-dropdown
-                        key={component.keyValue}
-                        header={component.csvHeaderValue}
-                        component-name={component.keyValue}
-                        options={fieldOptions}
-                        lookup-field-list={lookupFieldList}
-                        selected-object={selectedObject}
-                        is-additional-mapping="true"
-                        onhandlelookupselection={handleFieldChange}
-                        csv-header-options={csvHeaderOptions}
-                    >
-                    </c-csv-header-dropdown>
-                </template>
+                    <div class="slds-grid slds-grid_vertical-align-center slds-gutters">
+                        <div class="slds-col slds-grow">
+                            <lightning-combobox  
+                                label="Select CSV Header"
+                                data-index={index}
+                                placeholder="Choose column from CSV..."
+                                options={csvHeaderOptions}
+                                value={component.csvHeaderValue}
+                                onchange={handleCsvHeaderChange}
+                                variant="label-hidden">
+                            </lightning-combobox>    
+                        </div>
+
+                        <!-- Added slds-p-left_small to push the icon away from the dropdown -->
+                        <div class="slds-col slds-no-flex slds-p-left_small">
+                            <lightning-button-icon 
+                                icon-name="utility:delete" 
+                                variant="border-filled" 
+                                alternative-text="Delete Mapping" 
+                                class="slds-m-left_small custom-delete-btn"
+                                data-index={index} 
+                                onclick={DeleteComponent}>
+                            </lightning-button-icon>
+                        </div>
+                    </div>
+                    
+                    <template if:true={component.csvHeaderValue}>
+                        <!-- Increased top margin for the child component section -->
+                        <div class="child-mapping-container slds-m-top_medium slds-p-top_medium slds-border_top">
+                            <c-csv-header-dropdown
+                                key={component.keyValue}
+                                header={component.csvHeaderValue}
+                                component-name={component.keyValue}
+                                options={fieldOptions}
+                                lookup-field-list={lookupFieldList}
+                                selected-object={selectedObject}
+                                is-additional-mapping="true"
+                                onhandlelookupselection={handleFieldChange}
+                                csv-header-options={csvHeaderOptions}>
+                            </c-csv-header-dropdown>
+                        </div>
+                    </template>
+                </div>
             </template>
         </div>
 
-        <lightning-button label="Additional Mapping" onclick={handleAddComponents}></lightning-button>
-    
-</div>
+        <!-- Added slds-m-top_large to separate the button from the last card -->
+        <div class="slds-m-top_large">
+            <lightning-button 
+                label="Add Another Mapping" 
+                variant="neutral" 
+                icon-name="utility:add" 
+                onclick={handleAddComponents}>
+            </lightning-button>
+        </div>
+    </div>
 </template>

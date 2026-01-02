@@ -1,0 +1,40 @@
+/* Increased spacing and added a subtle shadow */
+.mapping-card {
+    background: #ffffff;
+    border: 1px solid #dddbda;
+    border-radius: 8px; /* Slightly rounder corners for a modern look */
+    padding: 1.25rem !important; /* Forces more internal breathing room */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    transition: all 0.2s ease-in-out;
+}
+
+/* Hover effect makes it feel more interactive */
+.mapping-card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-color: #1b96ff;
+}
+
+/* Ensure the delete button is perfectly centered with the dropdown */
+.custom-delete-btn {
+    --slds-c-button-color-border: #dddbda;
+}
+
+.custom-delete-btn:hover {
+    --slds-c-button-color-background-hover: #ba0517;
+    --slds-c-button-text-color-hover: white;
+}
+
+/* Spacing out the section header */
+.slds-section__title {
+    padding: 0.5rem;
+    border-radius: 4px;
+}
+
+/* Child component area breathing room */
+.child-mapping-container {
+    background-color: #fcfcfc;
+    margin-left: -1.25rem;
+    margin-right: -1.25rem;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+}

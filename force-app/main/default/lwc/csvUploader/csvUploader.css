@@ -1,178 +1,68 @@
-/* Custom styles for the card */
-lightning-card {
-    border-radius: 8px;          
-    padding: 2rem;  
+/* Container sizing to prevent layout jumping */
+.content-area {
+    min-height: 350px;
 }
 
-div {
-    padding: 1rem;
+/* File Upload Dropzone Styling */
+.custom-file-container {
+    background-color: #f9fafb;
+    border: 2px dashed #c9c9c9;
+    border-radius: 8px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
 }
 
-/* Styling the comboboxes */
-lightning-combobox {
-    padding: 0.5rem 1rem;  
+.custom-file-container:hover {
+    border-color: #0176d3;
+    background-color: #f0f8ff;
 }
 
-/* Next button custom style */
-.next-button {
-    padding: 2rem 1rem;  
-}
-
-/* Hover effect for the Next button */
-.next-button:hover {
-    cursor: pointer;  
-}
-
-/* Composite Mapping Configuration Styles */
-.columns-selector-section {
-    background-color: #f3f3f3;
-    border-radius: 4px;
-    border-left: 4px solid #0070d2;
-}
-
-.columns-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 1rem;
-    margin-bottom: 1rem;
-    padding: 1rem 0;
-    max-height: 300px;
-    overflow-y: auto;
-}
-
-.slds-checkbox_label {
+/* Styling the "Selected File" badge */
+.file-badge {
     display: flex;
     align-items: center;
-    padding: 0.5rem;
-    cursor: pointer;
     border-radius: 4px;
-    transition: background-color 0.2s ease-in-out;
+    animation: fadeIn 0.5s ease-in;
 }
 
-.slds-checkbox_label:hover {
-    background-color: #e8e8e8;
-}
-
-.slds-checkbox__input {
-    margin-right: 0.5rem;
-    cursor: pointer;
-}
-
-.slds-form-element__label {
-    margin: 0;
-    font-size: 0.875rem;
-    color: #333;
-}
-
-/* Selected Columns Display */
-.selected-columns-display {
-    background-color: #f9f9f9;
+/* Grouping inputs into visual cards */
+.input-card {
+    background: #ffffff;
+    border: 1px solid #e5e5e5;
     padding: 1rem;
-    border-radius: 4px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* Progress bar thick and rounded */
+.slds-progress-bar {
+    height: 1.25rem;
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+/* Progress card for Step 3 */
+.progress-info-card {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 2rem;
+    background: #fafaf9;
+    border-radius: 12px;
     border: 1px solid #d8d8d8;
 }
 
-.selected-columns-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
+/* Transitions */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-.column-chip {
-    background-color: #0070d2;
-    color: white;
-    padding: 0.5rem 0.75rem;
-    border-radius: 16px;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-    font-weight: 500;
+.slds-fade-in {
+    animation: fadeIn 0.4s ease-out;
 }
 
-.remove-column-btn {
-    background: none;
-    border: none;
-    color: white;
-    cursor: pointer;
-    font-size: 1.25rem;
-    padding: 0;
-    line-height: 1;
-    margin-left: 0.25rem;
-    transition: opacity 0.2s ease-in-out;
-}
-
-.remove-column-btn:hover {
-    opacity: 0.8;
-}
-
-/* Mappings Display Section */
-.mappings-display-section {
-    background-color: #fafafa;
-    padding: 1rem;
-    border-radius: 4px;
-    border-left: 4px solid #04844b;
-}
-
-.composite-mapping-card {
-    background-color: #ffffff;
-    border: 1px solid #d8d8d8;
-    border-radius: 4px;
-    padding: 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    transition: box-shadow 0.2s ease-in-out;
-    margin-bottom: 0.75rem;
-}
-
-.composite-mapping-card:hover {
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    border-color: #0070d2;
-}
-
-.composite-mapping-card p {
-    margin: 0.25rem 0;
-    color: #333;
-}
-
-.mapping-columns {
-    color: #666;
-    font-style: italic;
-    padding-left: 1rem;
-    word-break: break-word;
-}
-
-.delete-button {
-    color: #d32f2f;
-    transition: color 0.2s ease-in-out;
-    flex-shrink: 0;
-}
-
-.delete-button:hover {
-    color: #b71c1c;
-}
-
-.slds-border_top {
-    border-top: 1px solid #d8d8d8;
-}
-
-/* Scrollbar styling for column list */
-.columns-list::-webkit-scrollbar {
-    width: 8px;
-}
-
-.columns-list::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 4px;
-}
-
-.columns-list::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 4px;
-}
-
-.columns-list::-webkit-scrollbar-thumb:hover {
-    background: #555;
+/* Button hover enhancement */
+lightning-button:hover {
+    transform: translateY(-1px);
+    transition: transform 0.2s;
 }
