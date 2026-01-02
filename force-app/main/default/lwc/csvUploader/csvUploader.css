@@ -66,3 +66,102 @@ lightning-button:hover {
     transform: translateY(-1px);
     transition: transform 0.2s;
 }
+/* 1. Header & Typography Styling */
+.custom-header {
+    background-color: #f8fbff; /* Very light blue tint */
+    border-bottom: 2px solid #eef4ff;
+}
+
+.modal-title {
+    font-size: 1.5rem !important;
+    font-weight: 800 !important; /* Extra Bold */
+    color: #032d60; /* Dark Navy Blue */
+    letter-spacing: -0.5px;
+}
+
+.modal-subtitle {
+    color: #475569;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+/* 2. Content Background */
+.custom-content-bg {
+    background-color: #f1f5f9; /* Light grey-blue background to make cards pop */
+}
+
+/* 3. The Grid and Cards */
+.choice-grid {
+    display: flex;
+    gap: 2.5rem;
+}
+
+.visual-picker-container {
+    width: 280px;
+    cursor: pointer;
+}
+
+.custom-visual-picker {
+    background: #ffffff;
+    border: 2px solid transparent;
+    border-radius: 1.25rem; /* More rounded modern corners */
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 100%;
+}
+
+/* 4. Icon "Blobs" (Colors) */
+.icon-circle {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+.bg-blue { background-color: #e0f2fe; }
+.bg-green { background-color: #dcfce7; }
+
+/* 5. Card Text Styling */
+.card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+}
+
+.card-description {
+    font-size: 0.9rem;
+    color: #64748b;
+    line-height: 1.5;
+    font-weight: 400;
+}
+
+/* 6. Hover States (More Color!) */
+.visual-picker-container:hover .custom-visual-picker {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    border-color: #0ea5e9; /* Light Blue Border on hover */
+}
+
+.visual-picker-container:hover .card-title {
+    color: #032d60;
+}
+
+/* 7. Footer */
+.custom-footer {
+    background-color: #ffffff;
+    border-top: 1px solid #e2e8f0;
+}
+
+.footer-note {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    color: #94a3b8;
+}

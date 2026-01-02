@@ -5,9 +5,10 @@ import getPresignedUrl from '@salesforce/apex/CSVUploaderController.getPresigned
 import invokeProcessDataFeedBatch from '@salesforce/apex/CSVUploaderController.invokeProcessDataFeedBatch';
 import getObjects from '@salesforce/apex/CSVDataController.getObjects';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
- 
+
 export default class csvUploader extends LightningElement {
     chunkSize = 200; // Number of rows to send in each chunk
+    @track showMappingChoiceModal = false;
     @track csvFileContent = null;
     @track objectOptions = [];
     @track operationOptions = [];
@@ -94,13 +95,31 @@ export default class csvUploader extends LightningElement {
     }
  
     get showNextButton() {
-        return (this.ObjectIsSelected && this.OperationIsSelected);
+        return (
+            this.ObjectIsSelected &&
+            this.OperationIsSelected &&
+            this.fileName && this.fileName.length > 0
+        );
     }
  
     // Handle navigation to next page
     handleNextClick() {
-         this.showImportCard = false;
+        this.showImportCard = false;
+        this.showHeaderBlocks = false;
+        this.showMappingChoiceModal = true;
+    }
+
+    handleCreateNewMapping() {
+        this.showMappingChoiceModal = false;
         this.showHeaderBlocks = true;
+        this.showProgressBar = false;
+    }
+
+    handleUseExistingMapping() {
+        this.showMappingChoiceModal = false;
+        this.showHeaderBlocks = false;
+        this.showProgressBar = true;
+        this.processCSV();
     }
  
     // Convert CSV to JSON with validation for missing data
@@ -171,12 +190,12 @@ export default class csvUploader extends LightningElement {
         }
     }
 
-        previousPage() {
+    previousPage() {
                 this.showHeaderBlocks = false;
                 this.showImportCard = true;
                 this.showProgressBar = false;
                 // Optionally reset mapping state if needed
-        }
+    }
 
     // Go to Upload Page from Progress Page
     goToUploadPage() {
