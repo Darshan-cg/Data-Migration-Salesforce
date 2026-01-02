@@ -14,6 +14,7 @@ export default class csvUploader extends LightningElement {
     @track selectedOperation = '';
     @track selectedObject = '';
     @track headersArray = [];
+    @track showImportCard = true;
     @track showHeaderBlocks = false;
     @track showProgressBar=false;
     @track totalRecords=0;
@@ -25,6 +26,17 @@ export default class csvUploader extends LightningElement {
     ObjectIsSelected=false;
     OperationIsSelected=false;
  
+
+     get currentStep() {
+        if (this.showImportCard) {
+            return '1';
+        } else if (this.showHeaderBlocks) {
+            return '2';
+        } else if (this.showProgressBar) {
+            return '3';
+        }
+        return '1';
+    }
     // Fetch available objects on component load
     connectedCallback() {
         this.operationOptions = [
@@ -51,7 +63,7 @@ export default class csvUploader extends LightningElement {
             reader.onload = async () => {
                 this.csvFileContent = reader.result;
                 const lines = this.csvFileContent.split('\n').filter(line => line.trim() !== ''); // Filter out blank rows
-                const headers = this.parseCSVHeaders(lines[0]); // Use proper CSV parsing
+                const headers = lines[0].split(',');// Use proper CSV parsing
                 this.headersArray = headers;
                 this.totalRecords = lines.length - 1; // Exclude the header row
                 console.log('Parsed headers:', this.headersArray);
@@ -59,28 +71,7 @@ export default class csvUploader extends LightningElement {
             reader.readAsText(file);
         }
     }
-    parseCSVHeaders(headerLine) {
-        console.log(headerLine);
-        const headers = [];
-        let current = '';
-        let insideQuotes = false;
- 
-        for (const char of headerLine) {
-            if (char === '"') {
-                // Toggle quote state
-                insideQuotes = !insideQuotes;
-            } else if (char === ',' && !insideQuotes) {
-                // Comma outside quotes = field separator
-                headers.push(current.trim());
-                current = '';
-            } else {
-                current += char;
-            }
-        }
-            headers.push(current.trim());
- 
-        return headers;
-    }
+   
     // Handle object selection
     handleObjectChange(event) {
         this.ObjectIsSelected=true;
@@ -108,70 +99,63 @@ export default class csvUploader extends LightningElement {
  
     // Handle navigation to next page
     handleNextClick() {
-        this.showHeaderBlocks = true; // Show the blocks when the Next button is clicked
+         this.showImportCard = false;
+        this.showHeaderBlocks = true;
     }
  
     // Convert CSV to JSON with validation for missing data
     parseCSV(csv) {
         const lines = csv.split('\n');
-        const headers = this.parseCSVHeaders(lines[0]);
+        const headers = lines[0].split(',');
         this.headersArray = headers;
         const jsonData = [];
-        let errorRows = [];
  
         for (let i = 1; i < lines.length; i++) {
-            if (lines[i].trim() === '') continue; // Skip empty lines
-            const values = this.parseCSVRow(lines[i], headers.length);
-            // Check for missing data in the row
-            const hasMissing = values.length !== headers.length || values.some(v => v.trim() === '');
-            if (hasMissing) {
-                errorRows.push(i + 1); // CSV rows are 1-indexed (including header)
-                continue;
+            const values = lines[i].split(',');
+            if (values.length === headers.length) {
+                const jsonLine = {};
+                headers.forEach((header, index) => {
+                    jsonLine[header.trim()] = values[index].trim();
+                });
+                jsonData.push(jsonLine);
             }
-            const jsonLine = {};
-            headers.forEach((header, index) => {
-                jsonLine[header.trim()] = values[index].trim();
-            });
-            jsonData.push(jsonLine);
         }
- 
-       
         return jsonData;
     }
- 
+
     // Process CSV file
     async processCSV() {
         this.showProgressBar = true;
         this.showHeaderBlocks = false;
         if (this.csvFileContent) {
-            console.log('Attempting to upload file to S3:', this.fileName);
-            let uploadSuccess = false;
-            try {
-                // Get pre-signed URL from Apex
-                const presignedUrl = await getPresignedUrl({ fileName: this.fileName });
-                // Upload file to S3 using fetch
-                //console.log('Presigned URL:', presignedUrl);
-                const uploadResponse = await fetch(presignedUrl, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'text/csv' },
-                    body: new Blob([this.csvFileContent], { type: 'text/csv' })
-                });
-                if (uploadResponse.ok) {
-                    console.log('File sent to S3 successfully:', this.fileName);
-                    uploadSuccess = true;
-                } else {
-                    console.error('Error uploading file to S3:', uploadResponse.statusText);
-                }
-            } catch (error) {
-                console.error('Error uploading file to S3:', error);
-            }
-            if (!uploadSuccess) {
-                this.showProgressBar = false;
-                return;
-            }
+            // console.log('Attempting to upload file to S3:', this.fileName);
+            // try {
+            //     // Get pre-signed URL from Apex
+            //     const presignedUrl = await getPresignedUrl({ fileName: this.fileName });
+            //     // Upload file to S3 using fetch
+            //     //console.log('Presigned URL:', presignedUrl);
+            //     const uploadResponse = await fetch(presignedUrl, {
+            //         method: 'PUT',
+            //         headers: { 'Content-Type': 'text/csv' },
+            //         body: new Blob([this.csvFileContent], { type: 'text/csv' })
+            //     });
+            //     if (uploadResponse.ok) {
+            //         console.log('File sent to S3 successfully:', this.fileName);
+            //         uploadSuccess = true;
+            //     } else {
+            //         console.error('Error uploading file to S3:', uploadResponse.statusText);
+            //     }
+            // } catch (error) {
+            //     console.error('Error uploading file to S3:', error);
+            // }
+            // if (!uploadSuccess) {
+            //     this.showProgressBar = false;
+            //     return;
+            // }
             const jsonData = this.parseCSV(this.csvFileContent); // Parse CSV to JSON
             if (!jsonData) {
                 // Error already shown, stop processing
+                console.log('CSV parsing failed. Stopping process.');
                 this.showProgressBar = false;
                 return;
             }
@@ -186,42 +170,58 @@ export default class csvUploader extends LightningElement {
             console.error('No file uploaded. Please upload a CSV file before clicking Next.');
         }
     }
- 
-    //move to previous page
-    previousPage() {
+
+        previousPage() {
+                this.showHeaderBlocks = false;
+                this.showImportCard = true;
+                this.showProgressBar = false;
+                // Optionally reset mapping state if needed
+        }
+
+    // Go to Upload Page from Progress Page
+    goToUploadPage() {
+        this.showProgressBar = false;
+        this.showImportCard = true;
         this.showHeaderBlocks = false;
+        this.progressValue = 0;
+        this.processedRecords = 0;
+        this.fileName = '';
+        this.csvFileContent = null;
+        this.headersArray = [];
+        this.selectedObject = '';
+        this.selectedOperation = '';
+        this.ObjectIsSelected = false;
+        this.OperationIsSelected = false;
     }
  
-    parseCSVRow(row, expectedFieldCount) {
-        const fields = [];
-        let current = '';
-        let insideQuotes = false;
+    // parseCSVRow(row, expectedFieldCount) {
+    //     const fields = [];
+    //     let current = '';
+    //     let insideQuotes = false;
  
-        for (let i = 0; i < row.length; i++) {
-            const char = row[i];
+    //     for (let i = 0; i < row.length; i++) {
+    //         const char = row[i];
  
-            if (char === '"') {
-                // Toggle quote state
-                insideQuotes = !insideQuotes;
-            } else if (char === ',' && !insideQuotes) {
-                // Comma outside quotes = field separator
-                fields.push(current.trim());
-                current = '';
-            } else {
-                current += char;
-            }
-        }
+    //         if (char === '"') {
+    //             // Toggle quote state
+    //             insideQuotes = !insideQuotes;
+    //         } else if (char === ',' && !insideQuotes) {
+    //             // Comma outside quotes = field separator
+    //             fields.push(current.trim());
+    //             current = '';
+    //         } else {
+    //             current += char;
+    //         }
+    //     }
  
-        // Add the last field
-        if (current.length > 0) {
-            fields.push(current.trim());
-        }
+    //     // Add the last field
+    //     if (current.length > 0) {
+    //         fields.push(current.trim());
+    //     }
  
-        return fields;
-    }
-   
- 
- 
+    //     return fields;
+    // }
+
     // Send data to Apex in chunks
     async sendDataInChunks(jsonData, fileName) {
         for (let i = 0; i < jsonData.length; i += this.chunkSize) {
@@ -233,7 +233,7 @@ export default class csvUploader extends LightningElement {
  
             // Convert each JSON object in the chunk to a JSON string
             const jsonStringList = chunk.map(record => JSON.stringify(record));
- 
+            console.log('json:',jsonStringList);
             try {
                 // Send the chunk to Apex
                 await uploadToApex({ jsonDataList: jsonStringList, fileName: fileName });

@@ -1,160 +1,173 @@
-<!-- <template>
-    <lightning-card title="CSV Headers Dropdowns" icon-name="custom:custom63">
-        <template if:true={csvHeaders}>
-            <template for:each={csvHeaders} for:item="header">
-                <div key={header} class="slds-m-around_medium">
-                    <lightning-combobox
-                        name={header}
-                        label={header}
-                        placeholder="Select an option"
-                        options={fieldOptions}
-                        onchange={handleFieldChange}
-                        >
-                    </lightning-combobox>
+<template>
+    <!-- Header Section -->
+    <div class="slds-page-header slds-page-header_record-home custom-header">
+        <div class="slds-page-header__row">
+            <div class="slds-page-header__col-title">
+                <div class="slds-media">
+                    <div class="slds-media__figure">
+                        <lightning-icon icon-name="standard:account" size="medium"></lightning-icon>
+                    </div>
+                    <div class="slds-media__body">
+                        <div class="slds-page-header__name">
+                            <div class="slds-page-header__name-title">
+                                <h1>
+                                    <span class="slds-page-header__title slds-truncate" title="Field Mapping">Field Mapping Configuration</span>
+                                    <span class="slds-text-body_small slds-text-color_weak">Selected Object: <strong>{selectedObject}</strong></span>
+                                </h1>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Composite Mapping Section -->
+    <lightning-card title="Composite Unique Keys" icon-name="utility:unlinked" class="slds-m-top_medium">
+        <div class="slds-p-horizontal_medium">
+            <div class="slds-scoped-notification slds-media slds-media_center slds-theme_info slds-m-bottom_medium" role="status">
+                <div class="slds-media__figure">
+                    <lightning-icon icon-name="utility:info" size="small" variant="inverse"></lightning-icon>
+                </div>
+                <div class="slds-media__body">
+                    <p>Select multiple columns to ensure records are unique based on combined values (e.g., Name + Phone).</p>
+                </div>
+            </div>
+    
+            <div class="composite-box">
+                <h3 class="slds-text-title_caps slds-m-bottom_small">Available CSV Columns</h3>
+                <div class="columns-grid">
+                    <template for:each={availableColumnsForComposite} for:item="column">
+                        <div key={column.value} class="column-checkbox-card">
+                            <lightning-input 
+                                type="checkbox" 
+                                label={column.label} 
+                                data-column={column.value}
+                                onchange={handleColumnCheckboxChange}
+                                checked={column.isSelected}>
+                            </lightning-input>
+                        </div>
+                    </template>
+                </div>
+    
+                <div class="slds-m-top_medium slds-border_top slds-p-top_medium">
+                    <lightning-button 
+                        variant="brand" 
+                        label="Create Composite Mapping" 
+                        icon-name="utility:add"
+                        onclick={handleCreateCompositeMapping}
+                        disabled={isCreateMappingDisabled}>
+                    </lightning-button>
+                </div>
+            </div>
+    
+            <!-- Chips Area -->
+            <template if:true={hasSelectedColumns}>
+                <div class="slds-m-top_small slds-p-around_small selection-cloud">
+                    <span class="slds-text-title_bold slds-m-right_small">Selected:</span>
+                    <template for:each={selectedColumns} for:item="column">
+                        <lightning-pill key={column} label={column} onremove={handleRemoveSelectedColumn} data-column={column} class="slds-m-right_xx-small"></lightning-pill>
+                    </template>
                 </div>
             </template>
-        </template>
-        <template if:false={csvHeaders}>
-            <p>No headers found. Please upload a valid CSV file.</p>
-        </template>
-    </lightning-card>
-</template> -->
-<template>
-    <h1 class="slds-text-heading_medium slds-m-around_medium">Selected Object: {selectedObject}</h1>
-  
     
-    <lightning-card title="CSV Headers Dropdowns" icon-name="custom:custom63">
-        <template for:each={allHeaderOptions} for:item="column">
-            <c-csv-header-dropdown
-                key={column.value}
-                header={column.label}
-                component-name={column.value}
-                options={fieldOptions}
-                lookup-field-list={fieldsWithLookupList}
-                selected-object={selectedObject}
-                onhandlelookupselection={handleFieldChange}
-                csv-header-options={csvHeaderOptions}
-                >
-            </c-csv-header-dropdown>
-        <hr key={column.value} style="margin: 0px;"/>
-        </template>
-        
-        <c-csv-dynamic-component
-            csv-header-options={csvHeaderOptions}
-            field-options={fieldOptions}
-            selected-object={selectedObject}
-            lookup-field-list={fieldsWithLookupList}
-            onhandlelookupselection={handleFieldChange}
-            ondeletemapping={handleDeleteMapping}>
-        </c-csv-dynamic-component>
-        
-        
-          
-    <!-- Composite Mapping Configuration Section -->
-    <lightning-card title="Create Composite Lookup Mappings" icon-name="custom:custom63" class="slds-m-around_medium">
-        <p class="slds-p-around_small slds-text-body_small">Combine multiple columns to create unique composite keys for duplicate prevention (optional)</p>
-        
-        <!-- Available Columns Section -->
-        <div class="columns-selector-section slds-box slds-p-around_small slds-m-bottom_medium">
-            <h3 class="slds-text-heading_small slds-m-bottom_small">Available CSV Columns:</h3>
-            <div class="columns-list">
-                <template for:each={availableColumnsForComposite} for:item="column">
-                    <label key={column.value} class="slds-checkbox_label">
-                        <input 
-                            type="checkbox" 
-                            class="slds-checkbox__input" 
-                            data-column={column.value}
-                            onchange={handleColumnCheckboxChange}
-                            checked={column.isSelected}>
-                        <span class="slds-checkbox_faux"></span>
-                        <span class="slds-form-element__label">{column.label}</span>
-                    </label>
-                </template>
-            </div>
-            
-            <!-- Selected Columns Display -->
-            <template if:true={hasSelectedColumns}>
-                <div class="selected-columns-display slds-m-top_medium">
-                    <p class="slds-text-body_small"><strong>Selected Columns:</strong></p>
-                    <div class="selected-columns-chips">
-                        <template for:each={selectedColumns} for:item="column" for:index="index">
-                            <span key={column} class="column-chip slds-badge">
-                                {column}
-                                <button 
-                                    type="button" 
-                                    class="remove-column-btn" 
-                                    data-column={column}
-                                    onclick={handleRemoveSelectedColumn}
-                                    title="Remove {column}">
-                                    ×
-                                </button>
-                            </span>
+            <!-- Saved Mappings -->
+            <template if:true={hasCompositeMappings}>
+                <div class="slds-m-top_large">
+                    <h3 class="slds-text-title_caps slds-m-bottom_small">Active Composite Keys</h3>
+                    <div class="slds-grid slds-wrap slds-gutters">
+                        <template for:each={createdCompositeMappings} for:item="mapping">
+                            <div key={mapping.id} class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                                <article class="slds-card slds-card_boundary composite-result-card">
+                                    <div class="slds-card__body slds-card__body_inner slds-grid slds-grid_vertical-align-center">
+                                        <lightning-icon icon-name="utility:merge" size="x-small" class="slds-m-right_small"></lightning-icon>
+                                        <span class="slds-truncate">{mapping.compositeKey}</span>
+                                        <lightning-button-icon 
+                                            icon-name="utility:delete" 
+                                            variant="container"
+                                            onclick={handleDeleteCompositeMapping}
+                                            data-id={mapping.id}
+                                            class="slds-col_bump-left">
+                                        </lightning-button-icon>
+                                    </div>
+                                </article>
+                            </div>
                         </template>
                     </div>
                 </div>
             </template>
-
-            <!-- Create Mapping Button -->
-            <lightning-button 
-                variant="brand" 
-                label="Create Composite Mapping" 
-                onclick={handleCreateCompositeMapping}
-                disabled={isCreateMappingDisabled}
-                class="slds-m-top_small">
-            </lightning-button>
         </div>
+    </lightning-card>
+    
+    <div class="slds-m-around_medium">
+        <!-- CSV Mapping Section -->
+        <lightning-card title="Map CSV Headers to Salesforce Fields" icon-name="utility:replace">
+            <div class="mapping-container">
+                <!-- Header Labels -->
+                <div class="slds-grid slds-p-horizontal_medium slds-p-vertical_small table-header">
+                    <div class="slds-col slds-size_4-of-12"><strong>CSV Column Header</strong></div>
+                    <div class="slds-col slds-size_1-of-12 slds-text-align_center"></div>
+                    <div class="slds-col slds-size_7-of-12"><strong>Salesforce Field Target</strong></div>
+                </div>
 
-        <!-- Created Composite Mappings Display Section -->
-        <template if:true={hasCompositeMappings}>
-            <div class="mappings-display-section slds-m-bottom_medium">
-                <h3 class="slds-text-heading_small slds-m-bottom_small">Created Composite Mappings:</h3>
-                <template for:each={createdCompositeMappings} for:item="mapping" for:index="index">
-                    <div key={mapping.id} class="composite-mapping-card slds-box slds-p-around_small slds-m-bottom_small">
-                        <div class="slds-grid slds-grid_vertical-align-center">
-                            <div class="slds-col slds-size_11-of-12">
-                                <p class="slds-text-body_small slds-m-bottom_none">
-                                    <strong>Mapping {index}: </strong>
-                                </p>
-                                <p class="mapping-columns slds-text-body_small slds-m-bottom_none">
-                                    {mapping.compositeKey}
-                                </p>
-                            </div>
-                            <div class="slds-col slds-size_1-of-12 slds-text-align_right">
-                                <lightning-button-icon 
-                                    icon-name="utility:delete" 
-                                    alternative-text="Delete" 
-                                    title="Delete this mapping"
-                                    onclick={handleDeleteCompositeMapping}
-                                    data-id={mapping.id}
-                                    class="delete-button">
-                                </lightning-button-icon>
-                            </div>
+                <template for:each={allHeaderOptions} for:item="column">
+                    <div key={column.value} class="mapping-row slds-grid slds-grid_vertical-align-center slds-p-around_small">
+                        <!-- CSV Column Name -->
+                        <div class="slds-col slds-size_4-of-12">
+                            <span class="csv-label">{column.label}</span>
+                        </div>
+
+                        <!-- Directional Arrow -->
+                        <div class="slds-col slds-size_1-of-12 slds-text-align_center">
+                            <lightning-icon icon-name="utility:forward" size="xx-small" variant="light"></lightning-icon>
+                        </div>
+
+                        <!-- Salesforce Target Component -->
+                        <div class="slds-col slds-size_7-of-12">
+                            <c-csv-header-dropdown
+                                header={column.label}
+                                component-name={column.value}
+                                options={fieldOptions}
+                                lookup-field-list={fieldsWithLookupList}
+                                selected-object={selectedObject}
+                                onhandlelookupselection={handleFieldChange}
+                                csv-header-options={csvHeaderOptions}>
+                            </c-csv-header-dropdown>
                         </div>
                     </div>
                 </template>
+
+                <!-- Dynamic Component Section -->
+                <div class="slds-p-around_medium additional-mappings">
+                    <c-csv-dynamic-component
+                        csv-header-options={csvHeaderOptions}
+                        field-options={fieldOptions}
+                        selected-object={selectedObject}
+                        lookup-field-list={fieldsWithLookupList}
+                        onhandlelookupselection={handleFieldChange}
+                        ondeletemapping={handleDeleteMapping}>
+                    </c-csv-dynamic-component>
+                </div>
             </div>
-        </template>
-    </lightning-card>
+        </lightning-card>
 
-    <hr class="slds-m-vertical_medium" />
 
-        <lightning-datatable key-field="id" data={tableData} columns={columns} hide-checkbox-column="true" ></lightning-datatable>
+        <!-- Preview Table -->
+        <lightning-card title="Data Preview" icon-name="utility:table" class="slds-m-top_medium">
+            <div>
+                <lightning-datatable 
+                    key-field="id" 
+                    data={tableData} 
+                    columns={columns} 
+                    hide-checkbox-column="true">
+                </lightning-datatable>
+            </div>
+        </lightning-card>
+    </div>
 
-    </lightning-card>
-
-    <lightning-card>
-        
-        <div class="slds-grid slds-grid_align-center slds-m-top_medium">
-            <lightning-button 
-                label="Create Mapping" 
-                onclick={createMapping} 
-                class="slds-button slds-button_brand slds-button_large"
-                 variant="brand">
-            </lightning-button>
-            <lightning-button
-                label = "Reset Mapping"
-                onclick = {handleResetMapping}>
-            </lightning-button>
-        </div>
-    </lightning-card>
+    <!-- Actions Footer -->
+    <footer class="slds-docked-form-footer sticky-footer">
+        <lightning-button label="Reset All" onclick={handleResetMapping} class="slds-m-right_small"></lightning-button>
+        <lightning-button label="Create Mapping" variant="brand" onclick={createMapping}></lightning-button>
+    </footer>
 </template>

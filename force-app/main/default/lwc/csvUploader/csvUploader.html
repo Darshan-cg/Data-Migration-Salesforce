@@ -1,46 +1,112 @@
 <template>
-    <template if:true={showImportCard}>
-        <lightning-card class="slds-p-around_medium" title="Import CSV Data">
-            <div>
-                <h1>CSV File Reader</h1>
-                <input type="file" accept=".csv" onchange={handleFileUpload} />
-            </div>
-            <lightning-combobox name="objectDropdown" label="Select Object" value={selectedObject}
-                placeholder="Choose an Object" options={objectOptions} onchange={handleObjectChange} required="true">
-            </lightning-combobox>
+    <lightning-card title="CSV Data Importer" icon-name="standard:multi_select_checkbox">
+        
+        <!-- Step Indicator Header -->
+        <div class="slds-p-horizontal_large slds-p-bottom_medium slds-border_bottom">
+            <lightning-progress-indicator current-step={currentStep} type="path" variant="base">
+                <lightning-progress-step label="Upload & Configure" value="1"></lightning-progress-step>
+                <lightning-progress-step label="Map Fields" value="2"></lightning-progress-step>
+                <lightning-progress-step label="Importing" value="3"></lightning-progress-step>
+            </lightning-progress-indicator>
+        </div>
 
-            <lightning-combobox name="operationDropdown" label="Select Operation" value={selectedOperation}
-                placeholder="Choose Operation" options={operationOptions} onchange={handleOperationChange} required="true">
-            </lightning-combobox>
+        <!-- Main Content Area -->
+        <div class="slds-p-around_large content-area">
+            
+            <!-- STEP 1: UPLOAD -->
+            <template if:true={showImportCard}>
+                <div class="slds-grid slds-wrap slds-gutters">
+                    <!-- File Upload - Full Width Focus -->
+                    <div class="slds-col slds-size_1-of-1 slds-m-bottom_large">
+                        <div class="custom-file-container">
+                            <lightning-input 
+                                type="file" 
+                                label="Upload CSV File" 
+                                accept=".csv" 
+                                onchange={handleFileUpload}
+                                class="file-input-custom">
+                            </lightning-input>
+                            <template if:true={fileName}>
+                                <div class="slds-m-top_small slds-box slds-box_xx-small slds-theme_success slds-theme_alert-texture file-badge">
+                                    <lightning-icon icon-name="doctype:csv" size="small" variant="inverse" class="slds-m-right_x-small"></lightning-icon>
+                                    <span class="slds-text-color_default">Selected: <strong >{fileName}</strong></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
 
-            <template if:true={showNextButton}>
-                <lightning-button class='next-button' label="Next" onclick={handleNextClick}></lightning-button>
+                    <!-- Dropdowns - Side by Side -->
+                    <div class="slds-col slds-size_1-of-2">
+                        <div class="input-card">
+                            <lightning-combobox 
+                                name="objectDropdown" 
+                                label="Target Salesforce Object" 
+                                value={selectedObject}
+                                placeholder="Select destination..." 
+                                options={objectOptions} 
+                                onchange={handleObjectChange} 
+                                required>
+                            </lightning-combobox>
+                        </div>
+                    </div>
+
+                    <div class="slds-col slds-size_1-of-2">
+                        <div class="input-card">
+                            <lightning-combobox 
+                                name="operationDropdown" 
+                                label="Import Operation" 
+                                value={selectedOperation}
+                                placeholder="Insert, Update, or Upsert..." 
+                                options={operationOptions} 
+                                onchange={handleOperationChange} 
+                                required>
+                            </lightning-combobox>
+                        </div>
+                    </div>
+                </div>
             </template>
-        </lightning-card>
-    </template>
-    <template if:true={showHeaderBlocks}>
-        <lightning-card class="slds-p-around_medium">
-            <c-csv-field-mapper csv-headers={headersArray} selected-object={selectedObject} selected-operation={selectedOperation} file-name={fileName}></c-csv-field-mapper>
-            <!-- <template for:each={headersArray} for:item="header" for:index="index">
-            <lightning-card key={header}>
-                <p>{header}</p>
-            </lightning-card>
-            </template> -->
-            <lightning-button class='next-button' label="Previous" onclick={previousPage}></lightning-button>
-            <lightning-button class='next-button' label="Next" onclick={processCSV}></lightning-button>          
-        </lightning-card>
-    </template>
-    <template if:true={showProgressBar}>
-        <lightning-card class="slds-p-around_medium">
-            <h2 class="slds-text-heading_medium slds-m-around_medium slds-text-align_center"><strong>{message}</strong></h2>
-            <h1 class="slds-text-heading_medium slds-m-around_medium"><strong>Selected Object:</strong> {selectedObject}</h1>
-            <h1 class="slds-text-heading_medium slds-m-around_medium"><strong>File Name:</strong> {fileName}</h1>
-            <h1 class="slds-text-heading_medium slds-m-around_medium"><strong>Selected Operation:</strong> {selectedOperation}</h1>
 
-            <div class="slds-grid slds-grid_vertical-align-center slds-m-top_medium">
-        <lightning-progress-bar value={progressValue} variant="success" class="slds-size_1-of-1"></lightning-progress-bar>
-            </div>
-        <p class="slds-text-align_center">{processedRecords} of {totalRecords} records processed</p>
+            <!-- STEP 2: FIELD MAPPING -->
+            <template if:true={showHeaderBlocks}>
+                <div class="mapping-container slds-fade-in">
+                    <c-csv-field-mapper 
+                        csv-headers={headersArray} 
+                        selected-object={selectedObject} 
+                        selected-operation={selectedOperation} 
+                        file-name={fileName}>
+                    </c-csv-field-mapper>
+                </div>
+            </template>
+
+            <!-- STEP 3: PROGRESS -->
+            <template if:true={showProgressBar}>
+                <div class="slds-text-align_center slds-p-vertical_xx-large">
+                    <div class="progress-info-card">
+                        <lightning-icon icon-name="standard:process" size="large" class="slds-m-bottom_medium"></lightning-icon>
+                        <h2 class="slds-text-heading_medium slds-m-bottom_small">{message}</h2>
+                        
+                        <lightning-progress-bar value={progressValue} variant="success" size="large"></lightning-progress-bar>
+                        
+                        <p class="slds-m-top_medium slds-text-title_caps slds-text-color_weak">
+                            {processedRecords} / {totalRecords} Records
+                        </p>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <!-- Footer Actions -->
+        <div slot="footer" class="slds-p-top_medium">
+            <template if:true={showImportCard}>
+                <lightning-button label="Next" variant="brand" onclick={handleNextClick} icon-name="utility:forward" icon-position="right"></lightning-button>
+            </template>
+            <template if:true={showHeaderBlocks}>
+                <lightning-button label="Back" onclick={previousPage} class="slds-m-right_x-small" icon-name="utility:back"></lightning-button>
+                <lightning-button label="Next" variant="brand" onclick={processCSV} icon-name="utility:forward" icon-position="right"></lightning-button>
+            </template>
+            <template if:true={showProgressBar}>
+                <lightning-button label="Go to Upload Page" variant="brand" onclick={goToUploadPage}></lightning-button>
+            </template>
+        </div>
     </lightning-card>
-    </template> 
 </template>
