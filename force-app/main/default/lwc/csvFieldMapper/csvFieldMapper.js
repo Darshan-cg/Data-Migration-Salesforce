@@ -151,6 +151,9 @@ export default class CsvFieldMapper extends LightningElement {
     }
     handleResetMapping()
     {
+        this.createdCompositeMappings = [];
+        this.compositeMappingIdCounter = 0;
+        this.csvHeaders = this.csvHeaders.filter(header => !header.includes(','));
         this.lookupFields = [];
         this.selectedFields = [];
         this.selectedDropdownValues = [];
