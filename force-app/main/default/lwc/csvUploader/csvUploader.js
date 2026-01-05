@@ -56,10 +56,16 @@ export default class csvUploader extends LightningElement {
     handleFileUpload(event) {
         const file = event.target.files[0];
         console.log('File uploaded:', file);
-        this.fileName = file.name;
+        let name = file.name;
+        let ext = '';
+        if (name.includes('.')) {
+            ext = name.substring(name.lastIndexOf('.'));
+            name = name.substring(0, name.lastIndexOf('.'));
+        }
+        name = name.replace(/_/g, '');
+        this.fileName = name + ext;
         if (file) {
             const reader = new FileReader();
- 
             // Read the file asynchronously
             reader.onload = async () => {
                 this.csvFileContent = reader.result;
@@ -147,15 +153,15 @@ export default class csvUploader extends LightningElement {
         this.showProgressBar = true;
         this.showHeaderBlocks = false;
         if (this.csvFileContent) {
-            let name = this.fileName;
-            let ext = '';
-            if (name.includes('.')) {
-                ext = name.substring(name.lastIndexOf('.'));
-                name = name.substring(0, name.lastIndexOf('.'));
-            }
-            name = name.replace(/_/g, '');
-            this.fileName = name + ext;
-            console.log('File name:', this.fileName);
+            // let name = this.fileName;
+            // let ext = '';
+            // if (name.includes('.')) {
+            //     ext = name.substring(name.lastIndexOf('.'));
+            //     name = name.substring(0, name.lastIndexOf('.'));
+            // }
+            // name = name.replace(/_/g, '');
+            // this.fileName = name + ext;
+            // console.log('File name:', this.fileName);
             console.log('Attempting to upload file to S3:', this.fileName);
             let uploadSuccess = false;
             try {
