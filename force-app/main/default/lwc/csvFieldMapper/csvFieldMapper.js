@@ -92,7 +92,7 @@ export default class CsvFieldMapper extends LightningElement {
                 isMapped: false,
                 isButtonDisabled: false
             });
-        }
+        } 
     }
     handleFieldChange(event) {
         const fieldDetails = event.detail;

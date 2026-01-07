@@ -78,7 +78,7 @@ export default class csvUploader extends LightningElement {
                 console.log('Parsed headers:', this.headersArray);
             };
             reader.readAsText(file);
-        }
+        } 
     }
    
     // Handle object selection

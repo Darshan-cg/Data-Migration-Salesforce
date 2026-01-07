@@ -3,7 +3,7 @@ public without sharing class CSVUploaderController {
     public static void uploadToApex(List<String> jsonDataList, String fileName) {
 
         System.debug('jsonDataList'+jsonDataList);
-        
+         
         List<Data_Feed_Record__c> records = new List<Data_Feed_Record__c>();
     
         for (String jsonString : jsonDataList) {
