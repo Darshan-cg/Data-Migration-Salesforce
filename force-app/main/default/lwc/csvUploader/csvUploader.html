@@ -178,6 +178,7 @@
                 </template>
             </template>
             <template if:true={showHeaderBlocks}>
+                <lightning-button label="Reset All" onclick={handleResetAll} class="slds-m-right_small"></lightning-button>
                 <lightning-button label="Back" onclick={previousPage} class="slds-m-right_x-small" icon-name="utility:back"></lightning-button>
                 <lightning-button label="Next" variant="brand" onclick={processCSV} icon-name="utility:forward" icon-position="right"></lightning-button>
             </template>

@@ -14,7 +14,7 @@ public without sharing class CSVUploaderController {
         }
     
         Database.insert(records);
-    }
+    } 
 
     @AuraEnabled
     public static void updateDataFeedJobTrackerStatus(String status, String fileName, string operationType, String targetObject) {
