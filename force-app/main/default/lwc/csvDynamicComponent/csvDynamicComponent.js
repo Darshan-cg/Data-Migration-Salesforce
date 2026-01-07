@@ -17,7 +17,36 @@ export default class CsvDynamicComponent extends LightningElement {
     @track csvHeaderValue = '';
     @api lookupFieldList;
     @track keyValue = '';
+    // Inside csvHeaderDropdown.js
+@api header; // CSV Column Name
+@api value;  // Selected SF Field API Name
+@api options; // SF Field Options
 
+get mappingDescription() {
+    if (!this.value) {
+        return `Please select a Salesforce field to map for "${this.header}".`;
+    }
+
+    // Find the label for the selected Salesforce field
+    const selectedField = this.options.find(opt => opt.value === this.value);
+    const fieldLabel = selectedField ? selectedField.label : this.value;
+
+    // Logic for Standard Fields
+    if (!this.isLookupField) {
+        return `Data from CSV column "${this.header}" will be saved into the Salesforce field "${fieldLabel}".`;
+    }
+
+    // Logic for Lookup Fields
+    let baseLookupText = `To identify the ${this.lookupObjectName} for the "${fieldLabel}" field, the system will search for a record where: `;
+    
+    // Summarize the internal match rules if they exist
+    if (this.selectedUniqueIdentifierFields && this.selectedUniqueIdentifierFields.length > 0) {
+        const rules = this.selectedUniqueIdentifierFields.map(f => `"${f}" matches a column in your file`);
+        return baseLookupText + rules.join(' AND ') + ".";
+    }
+
+    return baseLookupText + "(select fields below to complete the search rule).";
+    }
     // connectedCallback() {
     //     console.log('');
     // }

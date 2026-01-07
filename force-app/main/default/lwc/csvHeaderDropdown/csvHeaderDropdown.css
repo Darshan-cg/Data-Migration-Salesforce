@@ -2,3 +2,40 @@
     display: flex;
     justify-content: space-between;
 }
+/* Box for Lookup mapping rules */
+.lookup-logic-box {
+    background: #f3f3f2;
+    border: 1px dashed #c9c9c9;
+    border-radius: 4px;
+}
+
+/* Make the match table look like a clean grid */
+.match-rule-table {
+    background: white;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.match-rule-table th {
+    background: #fafaf9;
+    padding: 8px;
+    font-size: 11px;
+    color: #444;
+}
+
+.match-rule-table td {
+    padding: 4px 8px;
+    vertical-align: middle;
+}
+
+/* Styling for the dynamic rows in the other component */
+.dynamic-row-box {
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: all 0.2s;
+}
+
+.dynamic-row-box:hover {
+    border-color: #0176d3;
+    background: #faffff;
+}

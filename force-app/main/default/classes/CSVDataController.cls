@@ -103,7 +103,7 @@ public with sharing class CSVDataController {
             List<String> row = new List<String>();
             for (String field : fieldNames) {
 
-                // Handle relationship fields (e.g., "Account.Name")
+        // Handle relationship fields (e.g., "Account.Name")
         if (field.contains('.')) {
             SObject temp = record;
             List<String> fieldParts = field.split('\\.');
@@ -135,7 +135,6 @@ public with sharing class CSVDataController {
         }
         
     }
-
 
     public class SObjectDescribe {
         @AuraEnabled public String label;

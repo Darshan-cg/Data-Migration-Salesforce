@@ -1,3 +1,7 @@
+/* Hide the cross (remove) icon from all lightning pills in this component */
+.slds-pill__remove {
+    display: none !important;
+}
 :host {
     --slds-c-card-color-background: #ffffff;
 }
