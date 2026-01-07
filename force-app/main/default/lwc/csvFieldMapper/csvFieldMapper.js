@@ -212,6 +212,26 @@ export default class CsvFieldMapper extends LightningElement {
     );
     }
     get tableData() {
+    handleResetMapping()
+    {
+        this.createdCompositeMappings = [];
+        this.compositeMappingIdCounter = 0;
+        this.csvHeaders = this.csvHeaders.filter(header => !header.includes(','));
+        this.lookupFields = [];
+        this.selectedFields = [];
+        this.selectedDropdownValues = [];
+        this.createInitialCsvMapping();
+        const dropdowns = this.template.querySelectorAll('c-csv-header-dropdown');
+            dropdowns.forEach(dropdown => {
+            dropdown.resetDropdown();
+        });
+        const dynamicComponent = this.template.querySelector('c-csv-dynamic-component');
+        if (dynamicComponent) 
+        {
+            dynamicComponent.resetAllAdditionalMappings();
+        }
+    }
+    get tableData(){
         return this.selectedDropdownValues.map(item => item);
     }
  
