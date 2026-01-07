@@ -14,9 +14,11 @@
     </lightning-layout-item>
     <lightning-layout-item size="6">
     <div class="slds-m-around_medium ">
-        <lightning-card lwc:if={configuration} title="">
-            <p> <strong>{configData}</strong></p>
-        </lightning-card>
+        <template if:true={configuration}>
+            <div style="background-color: #F3F3F3; padding: 12px; border-radius: 4px; border-left: 3px solid #0070D2;">
+                <p style="font-size: 12px; margin: 0;"><strong>Salesforce Field:</strong> <span style="color: #3E3E3C;">{configData}</span></p>
+            </div>
+        </template>
     </div>
     
     </lightning-layout-item>
@@ -24,35 +26,56 @@
     <div class="slds-m-around_medium">
 
         <template lwc:if={isLookupField}>
-            <lightning-dual-listbox
-                label="Select Unique Identifier Fields"
-                source-label="Available Fields"
-                selected-label="Selected Fields"
-                options={uniqueIdentifierFieldOptions}
-                value={selectedUniqueIdentifierFields}
-                onchange={handleUniqueIdentifierFieldChange}>
-            </lightning-dual-listbox>
+            <div style="background-color: #FFFACD; padding: 12px; border-radius: 4px; border-left: 3px solid #FF9800; margin-bottom: 16px;">
+                <p style="font-size: 12px; margin: 0 0 8px 0;"><strong>⚠ Lookup Field Configuration</strong></p>
+                <p style="font-size: 12px; margin: 0; line-height: 1.5;">This field references another Salesforce object. Select the unique identifier fields from your CSV that will be used to match records in the lookup object. You can combine multiple fields (composite key) if needed.</p>
+            </div>
+
+            <div style="background-color: #F3F3F3; padding: 12px; border-radius: 4px; margin-bottom: 16px;">
+                <p style="font-size: 12px; font-weight: bold; margin: 0 0 8px 0;">Step 1: Select Matching Fields</p>
+                <p style="font-size: 11px; margin: 0 0 12px 0; color: #706E6B;">These fields will help identify the related record in Salesforce</p>
+                <lightning-dual-listbox
+                    label="Select Unique Identifier Fields"
+                    source-label="Available Fields"
+                    selected-label="Selected Fields"
+                    options={uniqueIdentifierFieldOptions}
+                    value={selectedUniqueIdentifierFields}
+                    onchange={handleUniqueIdentifierFieldChange}>
+                </lightning-dual-listbox>
+            </div>
 
             <div>
                 <template lwc:if={isMultipleMappingSelected}>
-                    <div class="dynamic-container">
-                        <template for:each={components} for:item="component">
-                            <lightning-combobox key={component.id} label={component.label} placeholder={component.placeholder}
-                                                    options={csvHeaderOptions}
-                                                    onchange={handleAdditionalCsvFieldChange}></lightning-combobox>
-                        </template>
+                    <div style="background-color: #E7F5FF; padding: 12px; border-radius: 4px; border-left: 3px solid #0070D2; margin-bottom: 16px;">
+                        <p style="font-size: 12px; font-weight: bold; margin: 0 0 8px 0;">Step 2: Map Additional CSV Columns</p>
+                        <p style="font-size: 11px; margin: 0 0 12px 0; color: #706E6B;">Select which CSV columns contain the data for each identifier field</p>
+                        <div class="dynamic-container">
+                            <template for:each={components} for:item="component">
+                                <div key={component.id} style="margin-bottom: 12px;">
+                                    <lightning-combobox 
+                                        label={component.label} 
+                                        placeholder={component.placeholder}
+                                        options={csvHeaderOptions}
+                                        onchange={handleAdditionalCsvFieldChange}>
+                                    </lightning-combobox>
+                                </div>
+                            </template>
+                        </div>
                     </div>
                 </template>
                 
             </div>
 
-
-
-            <lightning-textarea
-                label="Where clause"
-                value={uniqueIdentifierWhereClause}
-                placeholder="Enter where clause">
-            </lightning-textarea>
+            <div style="background-color: #F0F0F0; padding: 12px; border-radius: 4px; margin-bottom: 12px;">
+                <p style="font-size: 12px; font-weight: bold; margin: 0 0 8px 0;">Step 3: Add Filter Conditions (Optional)</p>
+                <p style="font-size: 11px; margin: 0 0 12px 0; color: #706E6B;">Add a WHERE clause to filter which records in the lookup object should be considered</p>
+                <lightning-textarea
+                    label="Where clause"
+                    value={uniqueIdentifierWhereClause}
+                    placeholder="Example: IsActive = true AND Type = 'Customer'"
+                    help-text="This is optional. Leave empty to match against all records.">
+                </lightning-textarea>
+            </div>
         </template>
     </div>
     

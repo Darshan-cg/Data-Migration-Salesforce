@@ -1,3 +1,4 @@
+
 import { LightningElement, track } from 'lwc';
 import uploadToApex from '@salesforce/apex/CSVUploaderController.uploadToApex';
 import updateDataFeedJobTrackerStatus from '@salesforce/apex/CSVUploaderController.updateDataFeedJobTrackerStatus';
@@ -84,6 +85,12 @@ export default class csvUploader extends LightningElement {
         this.ObjectIsSelected=true;
         this.selectedObject = event.detail.value;
     }
+        handleResetAll() {
+        const mapper = this.template.querySelector('c-csv-field-mapper');
+        if (mapper) {
+            mapper.resetToHeaders(this.headersArray);
+        }
+    }
  
     // Handle operation selection
     handleOperationChange(event) {
@@ -153,11 +160,51 @@ export default class csvUploader extends LightningElement {
         this.showProgressBar = true;
         this.showHeaderBlocks = false;
         if (this.csvFileContent) {
+            let name = this.fileName;
             // let name = this.fileName;
             // let ext = '';
             // if (name.includes('.')) {
             //     ext = name.substring(name.lastIndexOf('.'));
             //     name = name.substring(0, name.lastIndexOf('.'));
+            // }
+            // name = name.replace(/_/g, '');
+            // this.fileName = name + ext;
+            // console.log('File name:', this.fileName);
+            // console.log('Attempting to upload file to S3:', this.fileName);
+            // let uploadSuccess = false;
+            // try {
+            //     this.fileName = this.fileName + '_' + this.selectedOperation + '_' + this.selectedObject;
+            //     // Get pre-signed URL from Apex
+            //     console.log('Updated Name',this.fileName);
+            //     const presignedUrl = await getPresignedUrl({ fileName: this.fileName });
+            //     console.log('Presigned URL:', presignedUrl);
+            //     // Upload file to S3 using fetch
+            //     //console.log('Presigned URL:', presignedUrl);
+            //     const uploadResponse = await fetch(presignedUrl, {
+            //         method: 'PUT',
+            //         headers: { 'Content-Type': 'text/csv' },
+            //         body: new Blob([this.csvFileContent], { type: 'text/csv' })
+            //     });
+            //     if (uploadResponse.ok) {
+            //         console.log('File sent to S3 successfully:', this.fileName);
+            //         uploadSuccess = true;
+            //     } else {
+            //         console.error('Error uploading file to S3:', uploadResponse.statusText);
+            //     }
+            // } catch (error) {
+            //     console.error('Error uploading file to S3:', error);
+            // }
+            // if (!uploadSuccess) {
+            //     this.showProgressBar = false;
+            //     return;
+            // }
+            // const jsonData = this.parseCSV(this.csvFileContent); // Parse CSV to JSON
+            if (!jsonData) {
+                // Error already shown, stop processing
+                console.log('CSV parsing failed. Stopping process.');
+                this.showProgressBar = false;
+                return;
+            }
             // }
             // name = name.replace(/_/g, '');
             // this.fileName = name + ext;
