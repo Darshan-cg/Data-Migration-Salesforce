@@ -25,7 +25,7 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
                                                	  FROM Data_Feed_Mapping__c WHERE File_Name__c = :fileName and Operation__c=:operation and SObject_API_Name__c=:targetObject and is_lookup__c=true]; 
             
             System.debug(lookupMappings);
-
+            system.debug(targetObj);
             for(Data_Feed_Mapping__c mapping:mappings)
             {
                 fieldColumnMapping.put(mapping.File_Column_Name__c,mapping.Field_to_update__c);
@@ -163,10 +163,13 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
                         }
                         if(k < multipleLookups.size() - 1)
                         {
+                            system.debug('multipleLookupFields[k]'+multipleLookupFields[k]);
+                            system.debug('inClause'+inClause);
                          	lookupQuery += multipleLookupFields[k] + ' IN (' + inClause + ')'+' AND ';                           
                         }
                         else
                         {
+                            System.debug('multipleLookupFields[k] 21'+multipleLookupFields[k]);
                          	lookupQuery += multipleLookupFields[k] + ' IN (' + inClause + ')';                                                    
                         }
                     }
@@ -200,7 +203,7 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
                     System.debug('lookupQuery'+lookupQuery);
                 }
 
-
+                system.debug('Final lookupQuery'+lookupQuery);
                 List<SObject> lookupRecords = Database.query(lookupQuery);                    
                 for(Sobject s:lookupRecords)
                 {

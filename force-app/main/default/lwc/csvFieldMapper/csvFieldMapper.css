@@ -32,7 +32,7 @@
     background: #f9f9f9;
     padding: 1.5rem;
     border-radius: 8px;
-    border: 1px dashed #c9c9c9;
+    border: 1px solid #e0e0e0;
 }
 
 .columns-grid {
@@ -46,16 +46,28 @@
     padding: 8px 12px;
     border: 1px solid #dddbda;
     border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.column-checkbox-card:hover {
+    background: #f0f0f0;
+    border-color: #0070d2;
 }
 
 .selection-cloud {
     background: #eef4ff;
     border-radius: 4px;
+    border-left: 3px solid #0070d2;
 }
 
 .composite-result-card {
-    border-left: 4px solid #0070d2 !important;
+    border-left: 4px solid #04844b !important;
     background: #fff;
+    transition: box-shadow 0.2s;
+}
+
+.composite-result-card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .sticky-footer {

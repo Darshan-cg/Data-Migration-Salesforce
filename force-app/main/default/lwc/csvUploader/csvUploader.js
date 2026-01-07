@@ -22,15 +22,29 @@ export default class csvUploader extends LightningElement {
     @track progressValue=0;
     @track processedRecords = 0;
     @track message;
+    
+    // Unique key selection modal and state
+    @track selectedUniqueKey = '';
  
     fileName = '';
     ObjectIsSelected=false;
     OperationIsSelected=false;
- 
+    
+    get showUniqueKeyCombobox() {
+        return this.selectedOperation === 'Update' && this.headersArray && this.headersArray.length > 0;
+    }
 
+    get uniqueKeyColumnOptions() {
+        return (this.headersArray || []).map(h => ({ label: h, value: h }));
+    }
+
+    handleUniqueKeyChange(event) {
+        this.selectedUniqueKey = event.detail.value;
+    }
+    
      get currentStep() {
-        if (this.showImportCard) {
-            return '1';
+         if (this.showImportCard) {
+             return '1';
         } else if (this.showHeaderBlocks) {
             return '2';
         } else if (this.showProgressBar) {
@@ -56,7 +70,14 @@ export default class csvUploader extends LightningElement {
     handleFileUpload(event) {
         const file = event.target.files[0];
         console.log('File uploaded:', file);
-        this.fileName = file.name;
+        let name = file.name;
+        let ext = '';
+        if (name.includes('.')) {
+            ext = name.substring(name.lastIndexOf('.'));
+            name = name.substring(0, name.lastIndexOf('.'));
+        }
+        name = name.replace(/_/g, '');
+        this.fileName = name + ext;
         if (file) {
             const reader = new FileReader();
  
@@ -104,6 +125,22 @@ export default class csvUploader extends LightningElement {
  
     // Handle navigation to next page
     handleNextClick() {
+        // For both Insert and Update, go to mapping choice modal
+        this.showImportCard = false;
+        this.showHeaderBlocks = false;
+        this.showMappingChoiceModal = true;
+    }
+
+    handleUniqueKeyTypeSelect(event) {
+        this.uniqueKeyType = event.target.value;
+    }
+
+    handleUniqueKeyTypeNext() {
+        if (!this.uniqueKeyType) {
+            // Optionally show error/toast
+            return;
+        }
+        this.showUniqueKeyTypeModal = false;
         this.showImportCard = false;
         this.showHeaderBlocks = false;
         this.showMappingChoiceModal = true;
@@ -224,6 +261,7 @@ export default class csvUploader extends LightningElement {
         this.selectedOperation = '';
         this.ObjectIsSelected = false;
         this.OperationIsSelected = false;
+        this.selectedUniqueKey = '';
     }
  
     // parseCSVRow(row, expectedFieldCount) {
