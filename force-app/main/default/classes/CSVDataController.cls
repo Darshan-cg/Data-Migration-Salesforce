@@ -36,7 +36,23 @@ public with sharing class CSVDataController {
             
             for (Schema.SObjectField field : fieldsMap.values()) {
                 if (field.getDescribe().isCreateable() || field.getDescribe().getName() == 'Id') {
-                    result.add(new FieldDescribe(field.getDescribe().getLabel(), field.getDescribe().getName(), isLookupField(field)));
+                    Boolean isLookup = isLookupField(field);
+                    String relatedObject = '';
+                    
+                    // Get the related object name for lookup fields
+                    if (isLookup) {
+                        List<Schema.SObjectType> refList = field.getDescribe().getReferenceTo();
+                        if (refList != null && refList.size() > 0) {
+                            relatedObject = refList.get(0).getDescribe().getName();
+                        }
+                    }
+                    
+                    result.add(new FieldDescribe(
+                        field.getDescribe().getLabel(),
+                        field.getDescribe().getName(),
+                        isLookup,
+                        relatedObject
+                    ));
                 }
             }
         }
@@ -150,11 +166,20 @@ public with sharing class CSVDataController {
         @AuraEnabled public String label;
         @AuraEnabled public String apiName;
         @AuraEnabled public Boolean isLookup;
+        @AuraEnabled public String relatedObject;
 
         public FieldDescribe(String label, String apiName, Boolean isLookup) {
             this.label = label;
             this.apiName = apiName;
             this.isLookup = isLookup;
+            this.relatedObject = '';
+        }
+
+        public FieldDescribe(String label, String apiName, Boolean isLookup, String relatedObject) {
+            this.label = label;
+            this.apiName = apiName;
+            this.isLookup = isLookup;
+            this.relatedObject = relatedObject;
         }
     }
 }
