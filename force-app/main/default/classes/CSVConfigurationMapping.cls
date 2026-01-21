@@ -51,9 +51,10 @@ public with sharing class CSVConfigurationMapping {
                 mapping.Lookup_Filter_Criteria__c = mp.whereClause;
                 mapping.Lookup_Return_Field__c = 'Id';
                 // Set the unique key flag for Update operations
-                if (wrapper.operationType == 'Upsert' && mp.IsUniqueKey != null) {
-                    mapping.put('Is_Unique_Key__c', mp.IsUniqueKey);
+                if (wrapper.operationType == 'Upsert' && mp.isUniqueKey != null) {
+                    mapping.put('Is_Unique_Key__c', mp.isUniqueKey);
                 }
+                system.debug('MAPPING VALUES: Operation__c=' + mapping.Operation__c + ', File_Name__c=' + mapping.File_Name__c + ', File_Column_Name__c=' + mapping.File_Column_Name__c + ', Field_to_update__c=' + mapping.Field_to_update__c + ', SObject_API_Name__c=' + mapping.SObject_API_Name__c + ', Lookup_Object_Name__c=' + mapping.Lookup_Object_Name__c + ', Is_Lookup__c=' + mapping.Is_Lookup__c + ', Lookup_Field__c=' + mapping.Lookup_Field__c + ', Lookup_Filter_Criteria__c=' + mapping.Lookup_Filter_Criteria__c + ', Lookup_Return_Field__c=' + mapping.Lookup_Return_Field__c + ', Is_Unique_Key__c=' + (wrapper.operationType == 'Upsert' ? String.valueOf(mp.isUniqueKey) : 'N/A'));
                 mappings.add(mapping);
                 system.debug('mapping created: ' + mapping);
             }
@@ -66,6 +67,7 @@ public with sharing class CSVConfigurationMapping {
             system.debug('Successfully inserted ' + mappings.size() + ' mappings');
         } catch (Exception e) {
             system.debug('Error in createConfiguration: ' + e.getMessage());
+            system.debug('Exception stack trace: ' + e.getStackTraceString());
             throw new AuraHandledException('Error creating configuration: ' + e.getMessage());
         }
     }
@@ -82,7 +84,7 @@ public with sharing class CSVConfigurationMapping {
         @AuraEnabled public String csvFieldName {get; set;}
         @AuraEnabled public String selectedField {get; set;}
         @AuraEnabled public Boolean isLookup {get; set;}
-        @auraEnabled public String selectedLookupFields {get; set;}
+        @AuraEnabled public String selectedLookupFields {get; set;}
         @AuraEnabled public String lookupObject {get; set;}
         @AuraEnabled public String whereClause {get; set;}
         @AuraEnabled public Boolean isUniqueKey {get; set;}

@@ -454,16 +454,16 @@ export default class CsvFieldMapper extends LightningElement {
             this.csvHeaders = this.csvHeaders.filter(h => h !== compositeKey);
             this.createdCompositeMappings = this.createdCompositeMappings.filter(m => m.id !== sectionId);
         }
+            // Re-index section ids to be sequential
+            this.compositeSections = this.compositeSections.map((sec, idx) => ({ ...sec, id: idx }));
     }
     createMapping() {
         this.configuration.objectName = this.selectedObject;
         this.configuration.operationType = this.selectedOperation;
-       
-        // Transform selectedDropdownValues to match the expected structure
+        // Only send fields expected by Apex
         this.configuration.mapping = this.selectedDropdownValues.map(item => {
             let selectedLookupFields = '';
             let lookupObjectName = '';
-
             if (item.isComposite && item.value && item.value.includes(',')) {
                 const parts = item.value.split(',').map(s => s.trim());
                 const lookupValues = parts
@@ -481,35 +481,16 @@ export default class CsvFieldMapper extends LightningElement {
                 selectedLookupFields = String(item.lookupField1).toLowerCase();
                 lookupObjectName = item.lookupObjectApiName || '';
             }
-           
-            const mappingObj = {
+            return {
                 csvFieldName: item.csvFieldName,
                 selectedField: item.selectedField,
                 isLookup: item.isLookup,
                 selectedLookupFields: selectedLookupFields,
                 lookupObject: lookupObjectName,
                 whereClause: item.whereClause || '',
-                isUniqueKey: item.isUniqueKey || false,
-                extraCsvField: item.extraCsvField || ''
+                isUniqueKey: item.isUniqueKey || false
             };
-           
-            return mappingObj;
         });
-       
-        if (this.selectedOperation === 'Upsert') {
-            this.configuration.mapping = this.selectedDropdownValues.map(mapping => {
-                const isUniqueKey = this.createdUniqueKeyColumns.includes(mapping.keyField);
-                return { ...mapping, IsUniqueKey: isUniqueKey,  lookupObject: mapping.lookupObjectApiName };
-            });
-        } else {
-            this.configuration.mapping = this.selectedDropdownValues.map(mapping => {
-                if (mapping.isLookup) {
-                    return { ...mapping, lookupObject: mapping.lookupObjectApiName };
-                }
-                return mapping;
-            });
-        }
-
         this.configuration.fileName = this.fileName;
         console.log('Creating mapping with configuration:', JSON.stringify(this.configuration));
         createConfiguration({
@@ -628,7 +609,8 @@ export default class CsvFieldMapper extends LightningElement {
             const compositeKey = section.selectedColumns.join(',');
             const existingCount = this.csvHeaders.filter(h => h === compositeKey).length;
             const occurrence = existingCount + 1;
-            const mappingId = this.compositeMappingIdCounter++;
+                // Use sectionIdx as mapping id for consistency after re-indexing
+                const mappingId = sectionIdx;
             const newMapping = {
                 id: mappingId,
                 compositeKey: compositeKey,
