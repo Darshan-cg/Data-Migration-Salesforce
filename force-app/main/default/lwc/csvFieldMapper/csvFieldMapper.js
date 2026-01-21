@@ -65,10 +65,10 @@ export default class CsvFieldMapper extends LightningElement {
     ];
  
     get showUniqueKeySection() {
-        return this.selectedOperation === 'Update' || this.selectedOperation === 'Upsert';
+        return  this.selectedOperation === 'Upsert';
     }
     get showUniqueKeyCombobox() {
-        return this.selectedOperation === 'Update' && (this.csvHeaderOptions.length > 0 || this.compositeHeaderOptions.length > 0);
+        return this.selectedOperation === 'Upsert' && (this.csvHeaderOptions.length > 0 || this.compositeHeaderOptions.length > 0);
     }
     
     // --- Unique Key Section Logic ---
@@ -463,16 +463,7 @@ export default class CsvFieldMapper extends LightningElement {
         this.configuration.mapping = this.selectedDropdownValues.map(item => {
             let selectedLookupFields = '';
             let lookupObjectName = '';
-           
-            console.log('Processing mapping item:', {
-                csvFieldName: item.csvFieldName,
-                isLookup: item.isLookup,
-                isComposite: item.isComposite,
-                lookupObjectApiName: item.lookupObjectApiName,
-                lookupObjectName: item.lookupObjectName
-            });
-           
-            // For composite mappings, collect all lookupField_* values
+
             if (item.isComposite && item.value && item.value.includes(',')) {
                 const parts = item.value.split(',').map(s => s.trim());
                 const lookupValues = parts
@@ -502,11 +493,23 @@ export default class CsvFieldMapper extends LightningElement {
                 extraCsvField: item.extraCsvField || ''
             };
            
-            console.log('Transformed mapping:', mappingObj);
-           
             return mappingObj;
         });
        
+        if (this.selectedOperation === 'Upsert') {
+            this.configuration.mapping = this.selectedDropdownValues.map(mapping => {
+                const isUniqueKey = this.createdUniqueKeyColumns.includes(mapping.keyField);
+                return { ...mapping, IsUniqueKey: isUniqueKey,  lookupObject: mapping.lookupObjectApiName };
+            });
+        } else {
+            this.configuration.mapping = this.selectedDropdownValues.map(mapping => {
+                if (mapping.isLookup) {
+                    return { ...mapping, lookupObject: mapping.lookupObjectApiName };
+                }
+                return mapping;
+            });
+        }
+
         this.configuration.fileName = this.fileName;
         console.log('Creating mapping with configuration:', JSON.stringify(this.configuration));
         createConfiguration({
