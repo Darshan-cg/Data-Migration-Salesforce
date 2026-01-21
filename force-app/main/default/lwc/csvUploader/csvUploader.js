@@ -57,7 +57,8 @@ export default class csvUploader extends LightningElement {
     connectedCallback() {
         this.operationOptions = [
             { label: 'Insert', value: 'Insert' },
-            { label: 'Update', value: 'Update' }
+            { label: 'Update', value: 'Update' },
+            { label: 'Upsert', value: 'Upsert' }
         ];
         getObjects()
             .then(data => {
@@ -85,7 +86,9 @@ export default class csvUploader extends LightningElement {
             reader.onload = async () => {
                 this.csvFileContent = reader.result;
                 const lines = this.csvFileContent.split('\n').filter(line => line.trim() !== ''); // Filter out blank rows
-                const headers = lines[0].split(',');// Use proper CSV parsing
+                let headers = lines[0].split(',');
+                // Trim whitespace and carriage returns from headers
+                headers = headers.map(h => h.trim().replace(/\r|\n/g, ''));
                 this.headersArray = headers;
                 this.totalRecords = lines.length - 1; // Exclude the header row
                 console.log('Parsed headers:', this.headersArray);
@@ -229,58 +232,28 @@ export default class csvUploader extends LightningElement {
             //     return;
             // }
             // const jsonData = this.parseCSV(this.csvFileContent); // Parse CSV to JSON
+         
+            // }
+
+            // if (!uploadSuccess) {
+            //     this.showProgressBar = false;
+            //     return;
+            // }
+
+            const jsonData = this.parseCSV(this.csvFileContent); // Parse CSV to JSON
             if (!jsonData) {
                 // Error already shown, stop processing
                 console.log('CSV parsing failed. Stopping process.');
                 this.showProgressBar = false;
                 return;
             }
-            // }
-            // name = name.replace(/_/g, '');
-            // this.fileName = name + ext;
-            // console.log('File name:', this.fileName);
-            console.log('Attempting to upload file to S3:', this.fileName);
-            let uploadSuccess = false;
             try {
-                this.fileName = this.fileName + '_' + this.selectedOperation + '_' + this.selectedObject;
-                // Get pre-signed URL from Apex
-                console.log('Updated Name',this.fileName);
-                const presignedUrl = await getPresignedUrl({ fileName: this.fileName });
-                console.log('Presigned URL:', presignedUrl);
-                // Upload file to S3 using fetch
-                //console.log('Presigned URL:', presignedUrl);
-                const uploadResponse = await fetch(presignedUrl, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'text/csv' },
-                    body: new Blob([this.csvFileContent], { type: 'text/csv' })
-                });
-                if (uploadResponse.ok) {
-                    console.log('File sent to S3 successfully:', this.fileName);
-                    uploadSuccess = true;
-                } else {
-                    console.error('Error uploading file to S3:', uploadResponse.statusText);
-                }
+                await this.sendDataInChunks(jsonData, this.fileName); // Wait for all chunks to be sent
+                // Invoke the ProcessDataFeed batch class
+                await this.invokeBatchClass();
             } catch (error) {
-                console.error('Error uploading file to S3:', error);
+                console.error('Error during processing:', error);
             }
-            if (!uploadSuccess) {
-                this.showProgressBar = false;
-                return;
-            }
-            // const jsonData = this.parseCSV(this.csvFileContent); // Parse CSV to JSON
-            // if (!jsonData) {
-            //     // Error already shown, stop processing
-            //     console.log('CSV parsing failed. Stopping process.');
-            //     this.showProgressBar = false;
-            //     return;
-            // }
-            // try {
-            //     await this.sendDataInChunks(jsonData, this.fileName); // Wait for all chunks to be sent
-            //     // Invoke the ProcessDataFeed batch class
-            //     await this.invokeBatchClass();
-            // } catch (error) {
-            //     console.error('Error during processing:', error);
-            // }
         } else {
             console.error('No file uploaded. Please upload a CSV file before clicking Next.');
         }

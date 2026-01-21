@@ -165,3 +165,189 @@ lightning-button:hover {
     letter-spacing: 1px;
     color: #94a3b8;
 }
+
+/* ========== IMPROVED IMPORT PAGE STYLES ========== */
+
+.import-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 500px;
+    background: linear-gradient(135deg, #f0f9ff 0%, #f3f4f6 100%);
+    padding: 3rem 1rem;
+}
+
+.import-progress-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    padding: 3rem;
+    max-width: 600px;
+    width: 100%;
+    animation: slideUp 0.6s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Header Section */
+.import-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.import-icon-wrapper {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #0070d2 0%, #0057b3 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    box-shadow: 0 10px 20px rgba(0, 112, 210, 0.2);
+}
+
+.import-icon-wrapper lightning-icon {
+    color: white;
+}
+
+.import-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 0.5rem 0;
+    letter-spacing: -0.5px;
+}
+
+.import-subtitle {
+    font-size: 1rem;
+    color: #64748b;
+    margin: 0;
+    font-weight: 500;
+}
+
+/* Status Message Box */
+.status-message-box {
+    background: #f0f9ff;
+    border-left: 4px solid #0070d2;
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.status-icon {
+    flex-shrink: 0;
+    color: #0070d2;
+    margin-top: 2px;
+}
+
+.status-text {
+    margin: 0;
+    color: #0c5cc5;
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+/* Progress Section */
+.progress-section {
+    margin-bottom: 2rem;
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.progress-label {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 0.95rem;
+}
+
+.progress-percentage {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0070d2;
+}
+
+.main-progress-bar {
+    height: 12px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Records Counter */
+.records-counter {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
+    padding: 1.5rem;
+    background: #f8fafc;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+}
+
+.counter-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.counter-label {
+    font-size: 0.85rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.counter-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #0070d2;
+}
+
+.counter-divider {
+    color: #cbd5e1;
+    font-weight: 600;
+}
+
+/* Completion Message */
+.completion-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+    background: #f0fdf4;
+    border: 2px solid #dcfce7;
+    border-radius: 12px;
+    text-align: center;
+    animation: slideUp 0.6s ease-out;
+}
+
+.completion-icon {
+    margin-bottom: 1rem;
+}
+
+.completion-text {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #047857;
+}

@@ -78,62 +78,62 @@
             </template>
 
 
-      <template if:true={showMappingChoiceModal}>
-    <section role="dialog" tabindex="-1" aria-modal="true" aria-labelledby="modal-heading-01" class="slds-modal slds-fade-in-open slds-modal_medium">
-        <div class="slds-modal__container">
-            <!-- Header: Added a subtle background color -->
-            <header class="slds-modal__header custom-header">
-                <h2 id="modal-heading-01" class="modal-title">🎯 Mapping Options</h2>
-                <p class="modal-subtitle">Choose how you want to configure your data mapping</p>
-            </header>
+            <template if:true={showMappingChoiceModal}>
+            <section role="dialog" tabindex="-1" aria-modal="true" aria-labelledby="modal-heading-01" class="slds-modal slds-fade-in-open slds-modal_medium">
+                <div class="slds-modal__container">
+                    <!-- Header: Added a subtle background color -->
+                    <header class="slds-modal__header custom-header">
+                        <h2 id="modal-heading-01" class="modal-title">🎯 Mapping Options</h2>
+                        <p class="modal-subtitle">Choose how you want to configure your data mapping</p>
+                    </header>
 
-            <!-- Content: Added a light background tint -->
-            <div class="slds-modal__content custom-content-bg slds-p-around_xx-large">
-                <div class="slds-grid slds-grid_align-center choice-grid">
-                    
-                    <!-- Option 1: Create New -->
-                    <div class="slds-col">
-                        <div class="visual-picker-container" onclick={handleCreateNewMapping} title="Create a new mapping configuration from scratch">
-                            <div class="custom-visual-picker">
-                                <div class="icon-circle bg-blue">
-                                    <lightning-icon icon-name="utility:add" variant="brand" size="medium"></lightning-icon>
-                                </div>
-                                <div class="slds-m-top_medium">
-                                    <h3 class="card-title">Create New Mapping</h3>
-                                    <p class="card-description">Set up field mappings and composite keys from scratch for maximum control.</p>
-                                    <p style="font-size: 11px; color: #706E6B; margin-top: 8px;"><strong>Best for:</strong> First time imports or complex data relationships</p>
+                    <!-- Content: Added a light background tint -->
+                    <div class="slds-modal__content custom-content-bg slds-p-around_xx-large">
+                        <div class="slds-grid slds-grid_align-center choice-grid">
+                            
+                            <!-- Option 1: Create New -->
+                            <div class="slds-col">
+                                <div class="visual-picker-container" onclick={handleCreateNewMapping} title="Create a new mapping configuration from scratch">
+                                    <div class="custom-visual-picker">
+                                        <div class="icon-circle bg-blue">
+                                            <lightning-icon icon-name="utility:add" variant="brand" size="medium"></lightning-icon>
+                                        </div>
+                                        <div class="slds-m-top_medium">
+                                            <h3 class="card-title">Create New Mapping</h3>
+                                            <p class="card-description">Set up field mappings and composite keys from scratch for maximum control.</p>
+                                            <p style="font-size: 11px; color: #706E6B; margin-top: 8px;"><strong>Best for:</strong> First time imports or complex data relationships</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
+
+                            <!-- Option 2: Use Existing -->
+                            <div class="slds-col">
+                                <div class="visual-picker-container" onclick={handleUseExistingMapping} title="Use a previously saved mapping configuration">
+                                    <div class="custom-visual-picker">
+                                        <div class="icon-circle bg-green">
+                                            <lightning-icon icon-name="utility:layers" variant="success" size="medium"></lightning-icon>
+                                        </div>
+                                        <div class="slds-m-top_medium">
+                                            <h3 class="card-title">Use Existing Mapping</h3>
+                                            <p class="card-description">Load a previously saved configuration to speed up repeat imports.</p>
+                                            <p style="font-size: 11px; color: #706E6B; margin-top: 8px;"><strong>Best for:</strong> Regular or recurring data imports</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
 
-                    <!-- Option 2: Use Existing -->
-                    <div class="slds-col">
-                        <div class="visual-picker-container" onclick={handleUseExistingMapping} title="Use a previously saved mapping configuration">
-                            <div class="custom-visual-picker">
-                                <div class="icon-circle bg-green">
-                                    <lightning-icon icon-name="utility:layers" variant="success" size="medium"></lightning-icon>
-                                </div>
-                                <div class="slds-m-top_medium">
-                                    <h3 class="card-title">Use Existing Mapping</h3>
-                                    <p class="card-description">Load a previously saved configuration to speed up repeat imports.</p>
-                                    <p style="font-size: 11px; color: #706E6B; margin-top: 8px;"><strong>Best for:</strong> Regular or recurring data imports</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
+                    <!-- Footer -->
+                    <footer class="slds-modal__footer custom-footer">
+                        <p class="footer-note">Selection is required to proceed</p>
+                    </footer>
                 </div>
-            </div>
-
-            <!-- Footer -->
-            <footer class="slds-modal__footer custom-footer">
-                <p class="footer-note">Selection is required to proceed</p>
-            </footer>
-        </div>
-    </section>
-    <div class="slds-backdrop slds-backdrop_open"></div>
-</template>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+            </template>
 
             <!-- STEP 2: FIELD MAPPING -->
             <template if:true={showHeaderBlocks}>

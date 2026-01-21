@@ -1,39 +1,73 @@
 public with sharing class CSVConfigurationMapping {
     @AuraEnabled(cacheable=false)
     public static void createConfiguration(ConfigurationWrapper wrapper) {
-        // Implement the logic to create configuration mappings
-        // This is a placeholder for the actual implementation
-        System.debug('Creating configuration mappings...');
-        system.debug('wrapper: ' + wrapper);
-        system.debug('wrapper.selectedObject: ' + wrapper.objectName);
-        system.debug('wrapper.operationType: ' + wrapper.operationType);
-        system.debug('wrapper.fileName: ' + wrapper.fileName);
-        // system.debug('wrapper.mapping: ' + wrapper.mapping);
-        List<Data_Feed_Mapping__c> mappings = new List<Data_Feed_Mapping__c>();
-        for (ConfigurationMapping mp : wrapper.mapping) {
-            system.debug('mp: ' + mp);
-            Data_Feed_Mapping__c mapping = new Data_Feed_Mapping__c();
-            mapping.Operation__c = wrapper.operationType;
-            mapping.File_Name__c = wrapper.fileName;
-            mapping.File_Column_Name__c = String.isEmpty(mp.extraCsvField) ?  mp.csvFieldName : mp.csvFieldName + ',' + mp.extraCsvField;
-            mapping.Field_to_update__c = mp.selectedField;
-            mapping.SObject_API_Name__c = wrapper.objectName;
-            mapping.Lookup_Object_Name__c = mp.lookupObject;
-            mapping.Is_Lookup__c = mp.isLookup;
-            mapping.Lookup_Field__c = mp.selectedLookupFields;
-            mapping.Lookup_Filter_Criteria__c = mp.whereClause;
-            mapping.Lookup_Return_Field__c = 'Id';
-            mappings.add(mapping);
-            system.debug('mapping: ' + mapping);
-        }
+        try {
+            system.debug('Hello');
+            // Validate input
+            if (wrapper == null) {
+                throw new AuraHandledException('Configuration wrapper is null');
+            }
+            
+            if (String.isEmpty(wrapper.objectName)) {
+                throw new AuraHandledException('Object name is required');
+            }
+            
+            if (String.isEmpty(wrapper.operationType)) {
+                throw new AuraHandledException('Operation type is required');
+            }
+            
+            if (wrapper.mapping == null || wrapper.mapping.isEmpty()) {
+                throw new AuraHandledException('No mappings provided');
+            }
+            
+            System.debug('Creating configuration mappings...');
+            system.debug('wrapper: ' + wrapper);
+            system.debug('wrapper.objectName: ' + wrapper.objectName);
+            system.debug('wrapper.operationType: ' + wrapper.operationType);
+            system.debug('wrapper.fileName: ' + wrapper.fileName);
+            system.debug('wrapper.mapping size: ' + wrapper.mapping.size());
+            
+            List<Data_Feed_Mapping__c> mappings = new List<Data_Feed_Mapping__c>();
+            for (ConfigurationMapping mp : wrapper.mapping) {
+                system.debug('Processing mapping: ' + mp);
+                
+                if (String.isEmpty(mp.csvFieldName)) {
+                    throw new AuraHandledException('CSV Field Name is required in mapping');
+                }
+                
+                if (String.isEmpty(mp.selectedField)) {
+                    throw new AuraHandledException('Selected Field is required for CSV column: ' + mp.csvFieldName);
+                }
+                
+                Data_Feed_Mapping__c mapping = new Data_Feed_Mapping__c();
+                mapping.Operation__c = wrapper.operationType;
+                mapping.File_Name__c = wrapper.fileName;
+                mapping.File_Column_Name__c = String.isEmpty(mp.extraCsvField) ?  mp.csvFieldName : mp.csvFieldName + ',' + mp.extraCsvField;
+                mapping.Field_to_update__c = mp.selectedField;
+                mapping.SObject_API_Name__c = wrapper.objectName;
+                mapping.Lookup_Object_Name__c = mp.lookupObject;
+                mapping.Is_Lookup__c = mp.isLookup;
+                mapping.Lookup_Field__c = mp.selectedLookupFields;
+                mapping.Lookup_Filter_Criteria__c = mp.whereClause;
+                mapping.Lookup_Return_Field__c = 'Id';
+                // Set the unique key flag for Update operations
+                if (wrapper.operationType == 'Upsert' && mp.IsUniqueKey != null) {
+                    mapping.put('Is_Unique_Key__c', mp.IsUniqueKey);
+                }
+                mappings.add(mapping);
+                system.debug('mapping created: ' + mapping);
+            }
 
-        if(mappings.size() == 0) {
-            system.debug('No mappings to insert');
-            return;
+            if(mappings.size() == 0) {
+                throw new AuraHandledException('No valid mappings to insert');
+            }
+            
+            insert mappings;
+            system.debug('Successfully inserted ' + mappings.size() + ' mappings');
+        } catch (Exception e) {
+            system.debug('Error in createConfiguration: ' + e.getMessage());
+            throw new AuraHandledException('Error creating configuration: ' + e.getMessage());
         }
-        
-        insert mappings;
-        // Database.saveresult[] results = Database.insert(mappings, false);
     }
 
 
@@ -51,6 +85,7 @@ public with sharing class CSVConfigurationMapping {
         @auraEnabled public String selectedLookupFields {get; set;}
         @AuraEnabled public String lookupObject {get; set;}
         @AuraEnabled public String whereClause {get; set;}
+        @AuraEnabled public Boolean isUniqueKey {get; set;}
         @AuraEnabled public String extraCsvField {get; set;}
     }
 }
