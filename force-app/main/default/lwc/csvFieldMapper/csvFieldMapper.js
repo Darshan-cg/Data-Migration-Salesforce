@@ -105,6 +105,7 @@ export default class CsvFieldMapper extends LightningElement {
             this.selectedDropdownValues[idx].matchField = '';
             this.selectedDropdownValues[idx].returnField = '';
             this.selectedDropdownValues[idx].targetObjectFields = [];
+            // this.selectedDropdownValues[idx].isLookup = !!value;
             if (value) {
                 getFields({ objectName: value })
                     .then(data => {
@@ -408,37 +409,37 @@ export default class CsvFieldMapper extends LightningElement {
         }
     }
  
-    handleLookupObjectChange(event) {
-        const keyField = event.target.name;
-        const value = event.detail && event.detail.value ? event.detail.value : event.target.value;
-        const index = this.selectedDropdownValues.findIndex(obj => obj.keyField === keyField);
-        if (index !== -1) {
-            this.selectedDropdownValues[index] = {
-                ...this.selectedDropdownValues[index],
-                lookupObjectApiName: value,
-                lookupObjectName: this.convertApiNameToDisplayName(value) || value,
-                lookupObjectOptions: [] // clear while loadin
-            };
-            this.selectedDropdownValues = [...this.selectedDropdownValues];
-            getFields({ objectName: value })
-                .then(fields => {
-                    const options = fields.map(f => ({ label: f.label, value: f.apiName }));
-                    this.selectedDropdownValues[index] = {
-                        ...this.selectedDropdownValues[index],
-                        lookupObjectOptions: options
-                    };
-                    this.selectedDropdownValues = [...this.selectedDropdownValues];
-                })
-                .catch(error => {
-                    this.selectedDropdownValues[index] = {
-                        ...this.selectedDropdownValues[index],
-                        lookupObjectOptions: []
-                    };
-                    this.selectedDropdownValues = [...this.selectedDropdownValues];
-                    console.error('Error fetching fields for lookup object:', error);
-                });
-        }
-    }
+    // handleLookupObjectChange(event) {
+    //     const keyField = event.target.name;
+    //     const value = event.detail && event.detail.value ? event.detail.value : event.target.value;
+    //     const index = this.selectedDropdownValues.findIndex(obj => obj.keyField === keyField);
+    //     if (index !== -1) {
+    //         this.selectedDropdownValues[index] = {
+    //             ...this.selectedDropdownValues[index],
+    //             lookupObjectApiName: value,
+    //             lookupObjectName: this.convertApiNameToDisplayName(value) || value,
+    //             lookupObjectOptions: [] // clear while loadin
+    //         };
+    //         this.selectedDropdownValues = [...this.selectedDropdownValues];
+    //         getFields({ objectName: value })
+    //             .then(fields => {
+    //                 const options = fields.map(f => ({ label: f.label, value: f.apiName }));
+    //                 this.selectedDropdownValues[index] = {
+    //                     ...this.selectedDropdownValues[index],
+    //                     lookupObjectOptions: options
+    //                 };
+    //                 this.selectedDropdownValues = [...this.selectedDropdownValues];
+    //             })
+    //             .catch(error => {
+    //                 this.selectedDropdownValues[index] = {
+    //                     ...this.selectedDropdownValues[index],
+    //                     lookupObjectOptions: []
+    //                 };
+    //                 this.selectedDropdownValues = [...this.selectedDropdownValues];
+    //                 console.error('Error fetching fields for lookup object:', error);
+    //             });
+    //     }
+    // }
  
     handleLookupFieldSelection(event) {
         const partName = event.target.name; // Composite part name or field name
@@ -522,14 +523,18 @@ export default class CsvFieldMapper extends LightningElement {
             this.createdCompositeMappings = this.createdCompositeMappings.filter(m => m.id !== sectionId);
         }
     }
+    
     createMapping() {
         this.configuration.objectName = this.selectedObject;
         this.configuration.operationType = this.selectedOperation;
-       
+
         // Transform selectedDropdownValues to match the expected structure
         this.configuration.mapping = this.selectedDropdownValues.map(item => {
             let selectedLookupFields = '';
             let lookupObjectName = '';
+            let targetObject = '';
+            let matchField = '';
+            let returnField = '';
 
             if (item.isComposite && item.value && item.value.includes(',')) {
                 const parts = item.value.split(',').map(s => s.trim());
@@ -548,29 +553,43 @@ export default class CsvFieldMapper extends LightningElement {
                 selectedLookupFields = String(item.lookupField1).toLowerCase();
                 lookupObjectName = item.lookupObjectApiName || '';
             }
-           
+
+            // Pass targetObject for non-lookup cross-object mapping
+            if (!item.isLookup && item.targetObject) {
+                targetObject = item.targetObject;
+                matchField = item.matchField ;
+                returnField = item.returnField ;
+            }
+
+            // Set isLookup to true if targetObject is set
+            const isLookupFinal = item.isLookup || (!!item.targetObject);
+
             const mappingObj = {
                 csvFieldName: item.csvFieldName,
                 selectedField: item.selectedField,
-                isLookup: item.isLookup,
+                isLookup: isLookupFinal,
                 selectedLookupFields: selectedLookupFields,
                 lookupObject: lookupObjectName,
                 whereClause: item.whereClause || '',
                 isUniqueKey: item.isUniqueKey || false,
+                targetObject: targetObject,
+                matchField: matchField,
+                returnField: returnField
             };
-           
+
             return mappingObj;
         });
-       
+
         if (this.selectedOperation === 'Upsert') {
-            this.configuration.mapping = this.selectedDropdownValues.map(mapping => {
-                const isUniqueKey = this.createdUniqueKeyColumns.includes(mapping.keyField);
-                return { ...mapping, IsUniqueKey: isUniqueKey,  lookupObject: mapping.lookupObjectApiName };
+            this.configuration.mapping = this.configuration.mapping.map(mapping => {
+                const orig = this.selectedDropdownValues.find(m => m.csvFieldName === mapping.csvFieldName && m.selectedField === mapping.selectedField);
+                const isUniqueKey = this.createdUniqueKeyColumns.includes(orig ? orig.keyField : mapping.csvFieldName);
+                return { ...mapping, IsUniqueKey: isUniqueKey, lookupObject: mapping.lookupObject };
             });
         } else {
-            this.configuration.mapping = this.selectedDropdownValues.map(mapping => {
+            this.configuration.mapping = this.configuration.mapping.map(mapping => {
                 if (mapping.isLookup) {
-                    return { ...mapping, lookupObject: mapping.lookupObjectApiName };
+                    return { ...mapping, lookupObject: mapping.lookupObject };
                 }
                 return mapping;
             });
