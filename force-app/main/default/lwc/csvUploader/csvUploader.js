@@ -312,17 +312,29 @@ export default class csvUploader extends LightningElement {
     // }
 
     // Send data to Apex in chunks
+
     async sendDataInChunks(jsonData, fileName) {
+        // Get mapped columns from csvFieldMapper
+        const mapper = this.template.querySelector('c-csv-field-mapper');
+        let mappedColumns = null;
+        if (mapper && typeof mapper.getMappedCsvColumns === 'function') {
+            mappedColumns = mapper.getMappedCsvColumns();
+        }
         for (let i = 0; i < jsonData.length; i += this.chunkSize) {
             const chunk = jsonData.slice(i, i + this.chunkSize);
- 
-            // if(i === 0) {
-            //     await updateDataFeedJobTrackerStatus({status:'Ready for Processing', fileName:this.fileName, operationType:this.selectedOperation,targetObject:this.selectedObject});
-            // }
- 
-            // Convert each JSON object in the chunk to a JSON string
-            const jsonStringList = chunk.map(record => JSON.stringify(record));
-            console.log('json:',jsonStringList);
+            // Filter each record to only include mapped columns
+            const filteredChunk = mappedColumns
+                ? chunk.map(record => {
+                    const filtered = {};
+                    mappedColumns.forEach(col => {
+                        if (record.hasOwnProperty(col)) filtered[col] = record[col];
+                    });
+                    return filtered;
+                })
+                : chunk;
+            // Convert each filtered JSON object in the chunk to a JSON string
+            const jsonStringList = filteredChunk.map(record => JSON.stringify(record));
+            console.log('json:', jsonStringList);
             try {
                 // Send the chunk to Apex
                 await uploadToApex({ jsonDataList: jsonStringList, fileName: fileName });
@@ -335,7 +347,7 @@ export default class csvUploader extends LightningElement {
         this.dispatchEvent(
             new ShowToastEvent({
                 title: 'Success',
-                message:this.message,
+                message: this.message,
                 variant: 'success',
             })
         );
