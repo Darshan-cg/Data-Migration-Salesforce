@@ -1,4 +1,4 @@
- import { api, LightningElement, track } from 'lwc';
+import { api, LightningElement, track } from 'lwc';
 import getFields from '@salesforce/apex/CSVDataController.getFields';
 import getLookupFields from '@salesforce/apex/LookupUtility.getLookupFieldsWithObjectName';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
@@ -18,6 +18,7 @@ export default class CsvFieldMapper extends LightningElement {
     @track lookupFields = [];
     @track selectedLookupField = '';
     @api csvHeaders = ['Id', 'Name', 'Email', 'Phone', 'Description']; // Example CSV fields
+    @api availableObjects = [];
     @track selectedDropdownValues = [];
     @track csvHeaderOptions = []; // For composite mapping checkboxes
     @track uniqueKeyHeaderOptions = []; // For unique key selection checkboxes
@@ -56,14 +57,39 @@ export default class CsvFieldMapper extends LightningElement {
         // Descriptive information for UI
     compositeKeyDescription = 'A composite key combines multiple fields to uniquely identify records. For example: Name + Phone creates a unique identifier using both fields together.';
     mappingStepDescription = 'Match each CSV column to the corresponding Salesforce field. For lookup fields, select the fields that will identify related records.';
+        // Delete a column mapping and update the data preview table
+        handleDeleteColumnMapping(event) {
+            // Get the column value (keyField) from the button's data attribute
+            const keyField = event.currentTarget.dataset.columnvalue;
+            // Remove from selectedDropdownValues (main mapping array)
+            this.selectedDropdownValues = this.selectedDropdownValues.filter(
+                mapping => mapping.keyField !== keyField
+            );
+            // Remove from csvHeaderOptions (for non-composite columns)
+            this.csvHeaderOptions = this.csvHeaderOptions.filter(
+                col => col.value !== keyField
+            );
+            // Remove from compositeHeaderOptions (for composite columns)
+            this.compositeHeaderOptions = this.compositeHeaderOptions.filter(
+                col => col.value !== keyField
+            );
+            // Show toast for feedback
+            this.showToast('Deleted', 'Column mapping removed.', 'success');
+        }
     
     columns = [
         { label: 'Csv Column', fieldName: 'csvFieldName' },
         { label: 'SF Field', fieldName: 'selectedField' },
         { label: 'Lookup Object', fieldName: 'lookupObjectName' },
-        { label: 'Selected Lookup Mapping', fieldName: 'lookupField1' }
+        { label: 'Selected Lookup Mapping', fieldName: 'lookupField1' },
+        { label: 'Return Field', fieldName: 'returnField' }
     ];
- 
+    
+    @api
+    getMappedCsvColumns() {
+        // Only include columns that are still mapped (visible in preview table)
+        return this.selectedDropdownValues.map(item => item.csvFieldName || item.keyField).filter(Boolean);
+    }
     get showUniqueKeySection() {
         return  this.selectedOperation === 'Upsert';
     }
@@ -91,6 +117,54 @@ export default class CsvFieldMapper extends LightningElement {
             options: column.lookupObjectOptions,
             name: part
         }));
+    }
+
+    // --- Cross-object, non-lookup mapping handlers ---
+    handleTargetObjectChange(event) {
+        const keyField = event.target.dataset.keyfield;
+        const value = event.detail.value;
+        const idx = this.selectedDropdownValues.findIndex(obj => obj.keyField === keyField);
+        if (idx !== -1) {
+            this.selectedDropdownValues[idx].targetObject = value;
+            this.selectedDropdownValues[idx].matchField = '';
+            this.selectedDropdownValues[idx].returnField = '';
+            this.selectedDropdownValues[idx].targetObjectFields = [];
+            // this.selectedDropdownValues[idx].isLookup = !!value;
+            if (value) {
+                getFields({ objectName: value })
+                    .then(data => {
+                        this.selectedDropdownValues[idx].targetObjectFields = data.map(field => ({ label: field.label, value: field.apiName }));
+                        this.selectedDropdownValues = [...this.selectedDropdownValues];
+                    })
+                    .catch(() => {
+                        this.selectedDropdownValues[idx].targetObjectFields = [];
+                        this.selectedDropdownValues = [...this.selectedDropdownValues];
+                    });
+            } else {
+                this.selectedDropdownValues[idx].targetObjectFields = [];
+                this.selectedDropdownValues = [...this.selectedDropdownValues];
+            }
+        }
+    }
+
+    handleTargetObjectMatchFieldChange(event) {
+        const keyField = event.target.dataset.keyfield;
+        const value = event.detail.value;
+        const idx = this.selectedDropdownValues.findIndex(obj => obj.keyField === keyField);
+        if (idx !== -1) {
+            this.selectedDropdownValues[idx].matchField = value;
+            this.selectedDropdownValues = [...this.selectedDropdownValues];
+        }
+    }
+    handleTargetObjectReturnFieldChange(event) {
+        const keyField = event.target.dataset.keyfield;
+        const value = event.detail.value;
+        const idx = this.selectedDropdownValues.findIndex(obj => obj.keyField === keyField);
+        if (idx !== -1) {
+            this.selectedDropdownValues[idx].returnField = value;
+            this.selectedDropdownValues = [...this.selectedDropdownValues];
+        }
+
     }
     // Returns array of parts for a composite key (split by ',')
     getCompositeParts(columnValue) {
@@ -278,23 +352,29 @@ export default class CsvFieldMapper extends LightningElement {
         // Case B: simple event from dropdown
         console.log('Received simple field change event:', event.detail, event.target);
         if (event && event.target && event.target.name) {
- 
             keyField = event.target.name;
             selectedValue = event.target.value;
             const index = this.selectedDropdownValues.findIndex(obj => obj.keyField === keyField);
- 
-                if (index !== -1) {
- 
+            if (index !== -1) {
                 isLookup = !!(this.fieldsWithLookupList && this.fieldsWithLookupList.some(f => f.apiName === selectedValue));
-                console.log("whereClause"+this.uniqueIdentifierWhereClause);
+                // Set returnField to 'id' for any lookup field whose selectedField ends with 'id'
+                let returnField = this.selectedDropdownValues[index].returnField;
+                if (
+                    isLookup &&
+                    selectedValue &&
+                    typeof selectedValue === 'string' &&
+                    selectedValue.trim().toLowerCase().endsWith('id')
+                ) {
+                    returnField = 'Id';
+                }
                 this.selectedDropdownValues[index] = {
                     ...this.selectedDropdownValues[index],
                     selectedField: selectedValue,
                     isLookup: isLookup,
                     whereClause: this.uniqueIdentifierWhereClause || '',
                     selectedLookupFields: isLookup ? (this.selectedDropdownValues[index].selectedLookupFields || []) : [],
+                    returnField: returnField
                 };
-               
                 if(selectedValue === 'Id') {
                     // For Id field, set lookup object to selected object
                     this.selectedDropdownValues[index] = {
@@ -309,7 +389,6 @@ export default class CsvFieldMapper extends LightningElement {
                 else if (isLookup ) {
                     // Get the lookup field details
                     const lookupFieldObj = this.fieldsWithLookupList.find(f => f.apiName === selectedValue);
-                   
                     if (lookupFieldObj) {
                         // Fetch the lookup fields and object information
                         getLookupFields({ parentObjectName: this.selectedObject, lookupFieldName: selectedValue })
@@ -317,17 +396,14 @@ export default class CsvFieldMapper extends LightningElement {
                             const lookupFieldOptions = data.fieldList.map(field => ({ label: field.label, value: field.apiName, isLookup: field.isLookup }));
                             console.log('Fetched lookup fields for', selectedValue, ':', lookupFieldOptions);
                             console.log('Lookup Object Name:', data.lookUpObjectName);
-                           
                             // Get fields of the lookup object to populate lookup object options
                             return getFields({ objectName: data.lookUpObjectName }).then(lookupObjFields => {
                                 const lookupObjFieldOptions = lookupObjFields.map(field => ({
                                     label: field.label,
                                     value: field.apiName
                                 }));
-                               
                                 // Convert API name to display name (e.g., "OperatingHour" -> "Operating Hour")
                                 const displayName = this.convertApiNameToDisplayName(data.lookUpObjectName);
-                               
                                 this.selectedDropdownValues[index] = {
                                     ...this.selectedDropdownValues[index],
                                     lookupObjectOptions: lookupObjFieldOptions,
@@ -359,19 +435,37 @@ export default class CsvFieldMapper extends LightningElement {
         }
     }
  
-    handleLookupObjectChange(event) {
-        const keyField = event.target.name;
-        const value = event.detail && event.detail.value ? event.detail.value : event.target.value;
-        const index = this.selectedDropdownValues.findIndex(obj => obj.keyField === keyField);
-        if (index !== -1) {
-            this.selectedDropdownValues[index] = {
-                ...this.selectedDropdownValues[index],
-                lookupObjectApiName: value,
-                lookupObjectName: this.convertApiNameToDisplayName(value) || value
-            };
-            this.selectedDropdownValues = [...this.selectedDropdownValues];
-        }
-    }
+    // handleLookupObjectChange(event) {
+    //     const keyField = event.target.name;
+    //     const value = event.detail && event.detail.value ? event.detail.value : event.target.value;
+    //     const index = this.selectedDropdownValues.findIndex(obj => obj.keyField === keyField);
+    //     if (index !== -1) {
+    //         this.selectedDropdownValues[index] = {
+    //             ...this.selectedDropdownValues[index],
+    //             lookupObjectApiName: value,
+    //             lookupObjectName: this.convertApiNameToDisplayName(value) || value,
+    //             lookupObjectOptions: [] // clear while loadin
+    //         };
+    //         this.selectedDropdownValues = [...this.selectedDropdownValues];
+    //         getFields({ objectName: value })
+    //             .then(fields => {
+    //                 const options = fields.map(f => ({ label: f.label, value: f.apiName }));
+    //                 this.selectedDropdownValues[index] = {
+    //                     ...this.selectedDropdownValues[index],
+    //                     lookupObjectOptions: options
+    //                 };
+    //                 this.selectedDropdownValues = [...this.selectedDropdownValues];
+    //             })
+    //             .catch(error => {
+    //                 this.selectedDropdownValues[index] = {
+    //                     ...this.selectedDropdownValues[index],
+    //                     lookupObjectOptions: []
+    //                 };
+    //                 this.selectedDropdownValues = [...this.selectedDropdownValues];
+    //                 console.error('Error fetching fields for lookup object:', error);
+    //             });
+    //     }
+    // }
  
     handleLookupFieldSelection(event) {
         const partName = event.target.name; // Composite part name or field name
@@ -457,13 +551,22 @@ export default class CsvFieldMapper extends LightningElement {
             // Re-index section ids to be sequential
             this.compositeSections = this.compositeSections.map((sec, idx) => ({ ...sec, id: idx }));
     }
+    
     createMapping() {
+
         this.configuration.objectName = this.selectedObject;
         this.configuration.operationType = this.selectedOperation;
-        // Only send fields expected by Apex
-        this.configuration.mapping = this.selectedDropdownValues.map(item => {
+
+        // Only use currently visible/active mappings for configuration
+        const activeMappings = this.selectedDropdownValues;
+
+        this.configuration.mapping = activeMappings.map(item => {
             let selectedLookupFields = '';
             let lookupObjectName = '';
+            let targetObject = '';
+            let matchField = '';
+            let returnField = '';
+
             if (item.isComposite && item.value && item.value.includes(',')) {
                 const parts = item.value.split(',').map(s => s.trim());
                 const lookupValues = parts
@@ -481,16 +584,61 @@ export default class CsvFieldMapper extends LightningElement {
                 selectedLookupFields = String(item.lookupField1).toLowerCase();
                 lookupObjectName = item.lookupObjectApiName || '';
             }
-            return {
-                csvFieldName: item.csvFieldName,
+
+            // Pass targetObject for non-lookup cross-object mapping
+            if (!item.isLookup && item.targetObject) {
+                targetObject = item.targetObject;
+                matchField = item.matchField ;
+                returnField = item.returnField ;
+            }
+
+            // Set returnField to 'id' for any lookup field whose selectedField ends with 'id' (case-insensitive)
+            if (
+                item.selectedField &&
+                typeof item.selectedField === 'string' &&
+                item.selectedField.trim().toLowerCase().endsWith('id')
+            ) {
+                returnField = 'id';
+            } else if (!returnField && item.returnField) {
+                returnField = item.returnField;
+            }
+            // Set isLookup to true if targetObject is set
+            const isLookupFinal = item.isLookup || (!!item.targetObject);
+
+            // Always set csvFieldName to keyField if missing
+            const csvFieldName = item.csvFieldName || item.keyField || '';
+
+            const mappingObj = {
+                csvFieldName: csvFieldName,
                 selectedField: item.selectedField,
-                isLookup: item.isLookup,
+                isLookup: isLookupFinal,
                 selectedLookupFields: selectedLookupFields,
                 lookupObject: lookupObjectName,
                 whereClause: item.whereClause || '',
-                isUniqueKey: item.isUniqueKey || false
+                isUniqueKey: item.isUniqueKey || false,
+                targetObject: targetObject,
+                matchField: matchField, 
+                returnField: returnField
             };
+
+            return mappingObj;
         });
+
+        if (this.selectedOperation === 'Upsert') {
+            this.configuration.mapping = this.configuration.mapping.map(mapping => {
+                const orig = this.selectedDropdownValues.find(m => m.csvFieldName === mapping.csvFieldName && m.selectedField === mapping.selectedField);
+                const isUniqueKey = this.createdUniqueKeyColumns.includes(orig ? orig.keyField : mapping.csvFieldName);
+                return { ...mapping, IsUniqueKey: isUniqueKey, lookupObject: mapping.lookupObject };
+            });
+        } else {
+            this.configuration.mapping = this.configuration.mapping.map(mapping => {
+                if (mapping.isLookup) {
+                    return { ...mapping, lookupObject: mapping.lookupObject };
+                }
+                return mapping;
+            });
+        }
+
         this.configuration.fileName = this.fileName;
         console.log('Creating mapping with configuration:', JSON.stringify(this.configuration));
         createConfiguration({
@@ -531,34 +679,41 @@ export default class CsvFieldMapper extends LightningElement {
     get tableData(){
         return this.selectedDropdownValues.map(item => {
             let lookupMapping = '';
-           
+            let lookupObjectName = item.lookupObjectName || '';
+            let returnField = item.returnField || ' ';
             // For composite mappings, collect all lookupField_* values
             if (item.isComposite && item.value) {
-                // Split the composite key to get all parts
                 const parts = item.value.split(',').map(s => s.trim());
-                // Collect all lookupField_* values for these parts
                 const lookupValues = parts
                     .map(part => {
                         const fieldValue = item['lookupField_' + part];
                         return fieldValue ? fieldValue : null;
                     })
                     .filter(val => val !== null && val !== undefined && val.trim && val.trim() !== '');
-               
                 if (lookupValues.length > 0) {
                     lookupMapping = lookupValues.join(',').toLowerCase();
                 }
             } else if (item.isLookup && item.lookupField1) {
-                // For non-composite lookups, just display the lookupField1 value
                 lookupMapping = item.lookupField1.toLowerCase();
+            } else if (!item.isLookup && item.targetObject) {
+                // For non-lookup cross-object mapping
+                lookupObjectName = item.targetObject;
+                lookupMapping = item.matchField || '';
+                returnField = item.returnField || '';
             }
-           
+            // Always set returnField to 'Id' for any lookup field
+            if (item.isLookup) {
+                returnField = 'Id';
+            }
             return {
                 ...item,
-                lookupField1: lookupMapping
+                lookupObjectName,
+                lookupField1: lookupMapping,
+                returnField
             };
         });
     }
- 
+
     // Composite Mapping Handlers
     handleColumnCheckboxChange(event) {
         const sectionId = parseInt(event.target.dataset.sectionid, 10);
@@ -719,7 +874,12 @@ export default class CsvFieldMapper extends LightningElement {
                 lookupObjectOptions: sd ? (sd.lookupObjectOptions || []) : [],
                 lookupField1: sd ? sd.lookupField1 : '',
                 whereClause: sd ? sd.whereClause : '',
-                compositeDropdowns
+                compositeDropdowns,
+                // Cross-object mapping fields (for non-lookup only)
+                targetObject: sd ? sd.targetObject : '',
+                targetObjectFields: sd ? (sd.targetObjectFields || []) : [],
+                matchField: sd ? sd.matchField : '',
+                returnField: sd ? sd.returnField : ''
             };
         });
     }
@@ -753,4 +913,3 @@ export default class CsvFieldMapper extends LightningElement {
     }
  
 }
- 

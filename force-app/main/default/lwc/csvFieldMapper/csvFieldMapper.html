@@ -114,14 +114,58 @@
                                     name={column.value}
                                     label="Salesforce Target Field"
                                     placeholder="Select a field"
-                                            class="consistent-field"
-                                            options={fieldOptions}
+                                    class="consistent-field"
+                                    options={fieldOptions}
                                     value={column.mappedField}
                                     onchange={handleFieldChange}>
                                 </lightning-combobox>
                             </div>
- 
-                                <template if:true={column.isLookupSelected}>
+
+
+                            <template if:false={column.isLookupSelected}>
+                                <!-- Cross-object, non-lookup mapping UI enhancement -->
+                                <div class="slds-grid slds-wrap slds-gutters">
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                                        <lightning-combobox
+                                            name="targetObject"
+                                            label="Lookup Object"
+                                            placeholder="Select a Salesforce object"
+                                            options={availableObjects}
+                                            value={column.targetObject}
+                                            data-keyfield={column.value}
+                                            onchange={handleTargetObjectChange}
+                                        >
+                                        </lightning-combobox>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                                        <lightning-combobox
+                                            name="matchField"
+                                            label="Salesforce Field to Match On"
+                                            placeholder="Select a field to match"
+                                            options={column.targetObjectFields}
+                                            value={column.matchField}
+                                            data-keyfield={column.value}
+                                            onchange={handleTargetObjectMatchFieldChange}
+                                        >
+                                        </lightning-combobox>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                                        <lightning-combobox
+                                            name="returnField"
+                                            label="Salesforce Field to Return"
+                                            placeholder="Select a field to return"
+                                            options={column.targetObjectFields}
+                                            value={column.returnField}
+                                            data-keyfield={column.value}
+                                            onchange={handleTargetObjectReturnFieldChange}
+                                        >
+                                        </lightning-combobox>
+                                    </div>
+                                </div>
+                              
+                            </template>
+
+                            <template if:true={column.isLookupSelected}>
                                    
                                     <div class="slds-grid slds-wrap slds-p-top_small slds-m-bottom_small">
                                         <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-p-right_small">
@@ -179,9 +223,8 @@
                                         </div>
                                     </div>
  
-                                </template>
-                           
- 
+                            </template>
+
                         </div>
  
                 </template>
