@@ -313,6 +313,11 @@ export default class csvUploader extends LightningElement {
 
     // Send data to Apex in chunks
     async sendDataInChunks(jsonData, fileName) {
+        const mapper = this.template.querySelector('c-csv-field-mapper');
+        let mappedColumns = null;
+        if (mapper && typeof mapper.getMappedCsvColumns === 'function') {
+            mappedColumns = mapper.getMappedCsvColumns();
+        }
         for (let i = 0; i < jsonData.length; i += this.chunkSize) {
             const chunk = jsonData.slice(i, i + this.chunkSize);
  
@@ -321,8 +326,19 @@ export default class csvUploader extends LightningElement {
             // }
  
             // Convert each JSON object in the chunk to a JSON string
-            const jsonStringList = chunk.map(record => JSON.stringify(record));
-            console.log('json:',jsonStringList);
+            // const jsonStringList = chunk.map(record => JSON.stringify(record));
+            // console.log('json:',jsonStringList);
+                const filteredChunk = mappedColumns
+                ? chunk.map(record => {
+                    const filtered = {};
+                    mappedColumns.forEach(col => {
+                        if (record.hasOwnProperty(col)) filtered[col] = record[col];
+                    });
+                    return filtered;
+                })
+                : chunk;
+                const jsonStringList = filteredChunk.map(record => JSON.stringify(record));
+
             try {
                 // Send the chunk to Apex
                 await uploadToApex({ jsonDataList: jsonStringList, fileName: fileName });

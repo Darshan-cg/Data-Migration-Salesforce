@@ -46,14 +46,14 @@ public with sharing class CSVConfigurationMapping {
                 mapping.File_Column_Name__c = mp.csvFieldName;
                 mapping.SObject_API_Name__c = wrapper.objectName;
                 if (mp.isLookup) {
-                    mapping.Lookup_Object_Name__c = mp.targetObject != null ? mp.targetObject : mp.lookupObject;
-                    mapping.Lookup_Field__c = mp.matchField != null ? mp.matchField : mp.selectedLookupFields;
+                    mapping.Lookup_Object_Name__c = mp.targetObject != '' ? mp.targetObject : mp.lookupObject;
+                    mapping.Lookup_Field__c = mp.matchField != '' ? mp.matchField : mp.selectedLookupFields;
                 } 
                 mapping.Is_Lookup__c = mp.isLookup;
                 mapping.Lookup_Filter_Criteria__c = mp.whereClause;
-                mapping.Lookup_Return_Field__c = mp.returnField != null ? mp.returnField : '';
+                mapping.Lookup_Return_Field__c = mp.returnField != '' ? mp.returnField : 'Id';
                 // Set the unique key flag for Update operations
-                if (wrapper.operationType == 'Upsert' && mp.isUniqueKey != null) {
+                if (wrapper.operationType == 'Upsert' && mp.isUniqueKey != false) {
                     mapping.put('Is_Unique_Key__c', mp.isUniqueKey);
                 }
                 mappings.add(mapping);

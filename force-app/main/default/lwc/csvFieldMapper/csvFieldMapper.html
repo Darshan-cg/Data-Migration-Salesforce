@@ -104,9 +104,18 @@
                         <div key={column.value} class="composite-box slds-m-bottom_large">
  
                             <div class="slds-grid slds-grid_align-spread slds-m-bottom_small">
- 
-                                <h3 class="slds-text-title_caps">{column.label}</h3>
- 
+                                 <h3 class="slds-text-title_caps">{column.label}</h3>
+                            
+                                   <lightning-button-icon
+                                    icon-name="utility:delete"
+                                    alternative-text="Delete Column Mapping"
+                                    title="Delete Column Mapping"
+                                    variant="bare"
+                                    size="large"
+                                    class="slds-m-left_x-small delete-btn-large"
+                                    onclick={handleDeleteColumnMapping}
+                                    data-columnvalue={column.value}>
+                                </lightning-button-icon>
                             </div>
                            
                             <div>
@@ -124,45 +133,98 @@
 
                             <template if:false={column.isLookupSelected}>
                                 <!-- Cross-object, non-lookup mapping UI enhancement -->
-                                <div class="slds-grid slds-wrap slds-gutters">
-                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
-                                        <lightning-combobox
-                                            name="targetObject"
-                                            label="Lookup Object"
-                                            placeholder="Select a Salesforce object"
-                                            options={availableObjects}
-                                            value={column.targetObject}
-                                            data-keyfield={column.value}
-                                            onchange={handleTargetObjectChange}
-                                        >
-                                        </lightning-combobox>
+                                <template if:true={column.compositeDropdowns.length}>
+                                    <!-- For composite non-lookup: render per-part mapping dropdowns -->
+                                    <!-- Only one lookup object dropdown for composite mapping -->
+                                    <div class="slds-grid slds-wrap slds-gutters slds-m-bottom_small">
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                                            <lightning-combobox
+                                                name="targetObject"
+                                                label="Lookup Object"
+                                                placeholder="Select a Salesforce object"
+                                                options={availableObjects}
+                                                value={column.targetObject}
+                                                data-keyfield={column.value}
+                                                onchange={handleCompositeTargetObjectChange}
+                                            >   
+                                            </lightning-combobox>
+                                        </div>
+                                        <div class="slds-col slds-size_2-of-1 slds-medium-size_1-of-3 slds-p-right_small">
+                                            <!-- Per-part match field dropdowns -->
+                                            <template for:each={column.compositeDropdowns} for:item="dropdown">
+                                                <div key={dropdown.name} class="slds-m-bottom_small">
+                                                    <lightning-combobox
+                                                        name={dropdown.name}
+                                                        label={dropdown.compositeLabel}
+                                                        options={dropdown.options}
+                                                        value={dropdown.value}
+                                                        placeholder="Select a field"
+                                                        data-keyfield={column.value}
+                                                        onchange={handleLookupFieldSelection}
+                                                    >
+                                                    </lightning-combobox>
+                                                </div>
+                                            </template>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                                            <lightning-combobox
+                                                name="returnField"
+                                                label="Salesforce Field to Return"
+                                                placeholder="Select a field to return"
+                                                options={column.compositeTargetObjectFields}
+                                                value={column.returnField}
+                                                data-keyfield={column.value}
+                                                onchange={handleTargetObjectReturnFieldChange}
+                                            >
+                                            </lightning-combobox>
+                                        </div>
                                     </div>
-                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
-                                        <lightning-combobox
-                                            name="matchField"
-                                            label="Salesforce Field to Match On"
-                                            placeholder="Select a field to match"
-                                            options={column.targetObjectFields}
-                                            value={column.matchField}
-                                            data-keyfield={column.value}
-                                            onchange={handleTargetObjectMatchFieldChange}
-                                        >
-                                        </lightning-combobox>
+
+                                </template>
+
+                                
+                                <!-- For non-composite: single set of dropdowns -->
+                                <template if:false={column.compositeDropdowns.length}>
+                                    <div class="slds-grid slds-wrap slds-gutters">
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                                            <lightning-combobox
+                                                name="targetObject"
+                                                label="Lookup Object"
+                                                placeholder="Select a Salesforce object"
+                                                options={availableObjects}
+                                                value={column.targetObject}
+                                                data-keyfield={column.value}
+                                                onchange={handleTargetObjectChange}
+                                            >
+                                            </lightning-combobox>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                                            <lightning-combobox
+                                                name="matchField"
+                                                label="Salesforce Field to Match On"
+                                                placeholder="Select a field to match"
+                                                options={column.targetObjectFields}
+                                                value={column.matchField}
+                                                data-keyfield={column.value}
+                                                onchange={handleTargetObjectMatchFieldChange}
+                                            >
+                                            </lightning-combobox>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                                            <lightning-combobox
+                                                name="returnField"
+                                                label="Salesforce Field to Return"
+                                                placeholder="Select a field to return"
+                                                options={column.targetObjectFields}
+                                                value={column.returnField}
+                                                data-keyfield={column.value}
+                                                onchange={handleTargetObjectReturnFieldChange}
+                                            >
+                                            </lightning-combobox>
+                                        </div>
                                     </div>
-                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
-                                        <lightning-combobox
-                                            name="returnField"
-                                            label="Salesforce Field to Return"
-                                            placeholder="Select a field to return"
-                                            options={column.targetObjectFields}
-                                            value={column.returnField}
-                                            data-keyfield={column.value}
-                                            onchange={handleTargetObjectReturnFieldChange}
-                                        >
-                                        </lightning-combobox>
-                                    </div>
-                                </div>
-                              
+                                </template>
+
                             </template>
 
                             <template if:true={column.isLookupSelected}>
@@ -177,7 +239,8 @@
                                             </div>
                                         </div>
                                         <div class="slds-col slds-size_2-of-1 slds-medium-size_1-of-3 slds-p-right_small">
-                                            <template if:true={column.compositeDropdowns.length}>
+
+                                        <template if:true={column.compositeDropdowns.length}>
                                                 <!-- For composite mappings, render multiple dropdowns -->
                                                 <template for:each={column.compositeDropdowns} for:item="dropdown">
                                                     <div key={dropdown.name} class="slds-m-bottom_small">
@@ -240,7 +303,7 @@
                         <lightning-icon icon-name="utility:info" size="small" variant="inverse"></lightning-icon>
                     </div>
                     <div class="slds-media__body">
-                        <p>Select multiple columns to ensure records are unique based on combined values (e.g., Name + Phone).</p>
+                         <p>Select multiple columns (e.g., Name + Phone) to enforce uniqueness based on their combined values, ensuring each record is uniquely identified by that column combination.</p>
                     </div>
                 </div>
                 <div class="slds-m-top_medium slds-m-bottom_medium">

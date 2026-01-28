@@ -34,7 +34,6 @@ export default class CsvFieldMapper extends LightningElement {
         mapping: []
     };
     @api uniqueKeyType = '';
-    
     @api
     resetToHeaders(headers) {
         this.createdCompositeMappings = [];
@@ -53,11 +52,14 @@ export default class CsvFieldMapper extends LightningElement {
             }));
             this.createInitialCsvMapping();
         }
-   
+        
         // Descriptive information for UI
-    compositeKeyDescription = 'A composite key combines multiple fields to uniquely identify records. For example: Name + Phone creates a unique identifier using both fields together.';
-    mappingStepDescription = 'Match each CSV column to the corresponding Salesforce field. For lookup fields, select the fields that will identify related records.';
-    
+        compositeKeyDescription = 'A composite key combines multiple fields to uniquely identify records. For example: Name + Phone creates a unique identifier using both fields together.';
+        mappingStepDescription = 'Match each CSV column to the corresponding Salesforce field. For lookup fields, select the fields that will identify related records.';
+        
+        @api getMappedCsvColumns() {
+            return this.selectedDropdownValues.map(item => item.csvFieldName || item.keyField).filter(Boolean);
+        }
     columns = [
         { label: 'Csv Column', fieldName: 'csvFieldName' },
         { label: 'SF Field', fieldName: 'selectedField' },
@@ -96,30 +98,88 @@ export default class CsvFieldMapper extends LightningElement {
     }
 
     // --- Cross-object, non-lookup mapping handlers ---
+    // Handler for SINGLE (non-composite) non-lookup target object selection
     handleTargetObjectChange(event) {
         const keyField = event.target.dataset.keyfield;
         const value = event.detail.value;
         const idx = this.selectedDropdownValues.findIndex(obj => obj.keyField === keyField);
-        if (idx !== -1) {
-            this.selectedDropdownValues[idx].targetObject = value;
-            this.selectedDropdownValues[idx].matchField = '';
-            this.selectedDropdownValues[idx].returnField = '';
-            this.selectedDropdownValues[idx].targetObjectFields = [];
-            // this.selectedDropdownValues[idx].isLookup = !!value;
-            if (value) {
-                getFields({ objectName: value })
-                    .then(data => {
-                        this.selectedDropdownValues[idx].targetObjectFields = data.map(field => ({ label: field.label, value: field.apiName }));
-                        this.selectedDropdownValues = [...this.selectedDropdownValues];
-                    })
-                    .catch(() => {
-                        this.selectedDropdownValues[idx].targetObjectFields = [];
-                        this.selectedDropdownValues = [...this.selectedDropdownValues];
-                    });
-            } else {
-                this.selectedDropdownValues[idx].targetObjectFields = [];
-                this.selectedDropdownValues = [...this.selectedDropdownValues];
-            }
+        if (idx === -1) return;
+
+        const item = { ...this.selectedDropdownValues[idx] };
+        item.targetObject = value;
+        item.matchField = '';
+        item.returnField = '';
+        item.targetObjectFields = [];
+        this.selectedDropdownValues[idx] = item;
+        this.selectedDropdownValues = [...this.selectedDropdownValues]; // Trigger reactivity
+
+        if (value) {
+            console.log('Fetching fields for single non-lookup object:', value);
+            getFields({ objectName: value })
+                .then(data => {
+                    const fieldsArray = data.map(field => ({ label: field.label, value: field.apiName }));
+                    this.selectedDropdownValues[idx] = {
+                        ...this.selectedDropdownValues[idx],
+                        targetObjectFields: fieldsArray
+                    };
+                    this.selectedDropdownValues = [...this.selectedDropdownValues];
+                    console.log('Fetched target object fields for', value, ':', fieldsArray);
+                })
+                .catch((error) => {
+                    console.error('Error fetching target object fields:', error);
+                    this.selectedDropdownValues[idx] = {
+                        ...this.selectedDropdownValues[idx],
+                        targetObjectFields: []
+                    };
+                    this.selectedDropdownValues = [...this.selectedDropdownValues];
+                });
+        }
+    }
+
+    // Handler for COMPOSITE non-lookup target object selection
+    handleCompositeTargetObjectChange(event) {
+        const keyField = event.target.dataset.keyfield;
+        const value = event.detail.value;
+        const idx = this.selectedDropdownValues.findIndex(obj => obj.keyField === keyField);
+        if (idx === -1) return;
+
+        const item = { ...this.selectedDropdownValues[idx] };
+        console.log('handleCompositeTargetObjectChange - before update:', 'isComposite:', item.isComposite, 'keyField:', keyField);
+        
+        item.targetObject = value;
+        item.compositeTargetObject = value;
+        item.returnField = '';
+        item.compositeTargetObjectFields = [];
+        
+        console.log('handleCompositeTargetObjectChange - after update:', 'isComposite:', item.isComposite);
+        
+        this.selectedDropdownValues[idx] = item;
+        this.selectedDropdownValues = [...this.selectedDropdownValues]; // Trigger reactivity immediately
+
+        if (value) {
+            console.log('Fetching fields for composite non-lookup object:', value);
+            getFields({ objectName: value })
+                .then(data => {
+                    const fieldsArray = data.map(field => ({ label: field.label, value: field.apiName }));
+                    console.log('After fetch - idx:', idx, 'isComposite before:', this.selectedDropdownValues[idx].isComposite);
+                    
+                    this.selectedDropdownValues[idx] = {
+                        ...this.selectedDropdownValues[idx],
+                        compositeTargetObjectFields: fieldsArray
+                    };
+                    
+                    console.log('After fetch - isComposite after:', this.selectedDropdownValues[idx].isComposite);
+                    this.selectedDropdownValues = [...this.selectedDropdownValues];
+                    console.log('Fetched composite target object fields for', value, ':', fieldsArray);
+                })
+                .catch((error) => {
+                    console.error('Error fetching composite target object fields:', error);
+                    this.selectedDropdownValues[idx] = {
+                        ...this.selectedDropdownValues[idx],
+                        compositeTargetObjectFields: []
+                    };
+                    this.selectedDropdownValues = [...this.selectedDropdownValues];
+                });
         }
     }
 
@@ -396,18 +456,27 @@ export default class CsvFieldMapper extends LightningElement {
                     }
                 } else {
                     // clear any lookup-specific options when not a lookup
+                    // BUT preserve isComposite flag if it was already set
+                    const shouldPreserveComposite = this.selectedDropdownValues[index].isComposite === true;
                     this.selectedDropdownValues[index] = {
                         ...this.selectedDropdownValues[index],
                         lookupObjectOptions: [],
                         lookupObjectApiName: '',
                         lookupObjectName: '',
                         whereClause: '',
-                    };
+                        isComposite: shouldPreserveComposite, // Preserve if it's a composite
+                        targetObject: '',
+                        targetObjectFields: [],
+                        compositeTargetObjectFields: [],
+                        matchField: '',
+                        returnField: ''
+                    }
+                    }
                     this.selectedDropdownValues = [...this.selectedDropdownValues];
                 }
             }
         }
-    }
+    
  
     // handleLookupObjectChange(event) {
     //     const keyField = event.target.name;
@@ -537,7 +606,11 @@ export default class CsvFieldMapper extends LightningElement {
             let returnField = '';
 
             if (item.isComposite && item.value && item.value.includes(',')) {
+
+                console.log('>>> ENTERING COMPOSITE BRANCH for', item.csvFieldName);
                 const parts = item.value.split(',').map(s => s.trim());
+                
+                // Collect per-part field selections for BOTH composite lookup and composite non-lookup
                 const lookupValues = parts
                     .map(part => {
                         const val = item['lookupField_' + part];
@@ -547,18 +620,33 @@ export default class CsvFieldMapper extends LightningElement {
                 if (lookupValues.length > 0) {
                     selectedLookupFields = lookupValues.join(',');
                 }
-                lookupObjectName = item.lookupObjectApiName || '';
+                
+                // For composite lookup: use lookupObjectApiName
+                // For composite non-lookup: use compositeTargetObject
+                if (item.isLookup) {
+                    lookupObjectName = item.lookupObjectApiName || '';
+                } else if (item.compositeTargetObject) {
+                    console.log('>>> COMPOSITE NON-LOOKUP detected for', item.csvFieldName);
+                    // Composite non-lookup mapping
+                    lookupObjectName = item.compositeTargetObject;
+                    targetObject = item.compositeTargetObject;
+                    matchField = selectedLookupFields; // Store the per-part field selections here
+                    returnField = item.returnField || '';
+                }
             } else if (item.isLookup && item.lookupField1) {
+                console.log('>>> ENTERING NON-COMPOSITE LOOKUP BRANCH for', item.csvFieldName);
                 // For non-composite lookups
                 selectedLookupFields = String(item.lookupField1).toLowerCase();
                 lookupObjectName = item.lookupObjectApiName || '';
             }
 
-            // Pass targetObject for non-lookup cross-object mapping
-            if (!item.isLookup && item.targetObject) {
+            // Pass targetObject for single non-lookup cross-object mapping
+            if (!item.isComposite && !item.isLookup && item.targetObject) {
+                console.log('>>> ENTERING SINGLE NON-LOOKUP BRANCH for', item.csvFieldName);
                 targetObject = item.targetObject;
                 matchField = item.matchField ;
                 returnField = item.returnField ;
+                lookupObjectName = item.targetObject;
             }
 
             // Set isLookup to true if targetObject is set
@@ -576,7 +664,7 @@ export default class CsvFieldMapper extends LightningElement {
                 matchField: matchField,
                 returnField: returnField
             };
-
+            
             return mappingObj;
         });
 
@@ -620,7 +708,13 @@ export default class CsvFieldMapper extends LightningElement {
                   lookupObjectApiName: '',
                   whereClause: '',
                   lookupObjectOptions: [],
-                  lookupField1: ''
+                  lookupField1: '',
+                  isComposite: false,
+                  targetObject: '',
+                  targetObjectFields: [],
+                  compositeTargetObjectFields: [],
+                  matchField: '',
+                  returnField: ''
                  });
         }
     }
@@ -637,26 +731,53 @@ export default class CsvFieldMapper extends LightningElement {
             let lookupMapping = '';
             let lookupObjectName = item.lookupObjectName || '';
             let returnField = item.returnField || ' ';
+                    
             // For composite mappings, collect all lookupField_* values
             if (item.isComposite && item.value) {
+                console.log('>>> ENTERING COMPOSITE BRANCH for', item.csvFieldName);
                 const parts = item.value.split(',').map(s => s.trim());
+                
                 const lookupValues = parts
                     .map(part => {
-                        const fieldValue = item['lookupField_' + part];
-                        return fieldValue ? fieldValue : null;
+                        const propName = 'lookupField_' + part;
+                        const fieldValue = item[propName];
+                        console.log(`  Looking for '${propName}': ${fieldValue}`);
+                        // Return the field value if it exists and is not empty
+                        if (fieldValue && typeof fieldValue === 'string' && fieldValue.trim()) {
+                            return fieldValue.trim();
+                        }
+                        return null;
                     })
-                    .filter(val => val !== null && val !== undefined && val.trim && val.trim() !== '');
+                    .filter(val => val !== null && val !== undefined);
+                
+                console.log('  Collected lookupValues:', lookupValues);
+                
                 if (lookupValues.length > 0) {
-                    lookupMapping = lookupValues.join(',').toLowerCase();
+                    lookupMapping = lookupValues.join(',');
                 }
+                
+                // For composite non-lookup: use compositeTargetObject as lookup object name
+                if (!item.isLookup && item.compositeTargetObject) {
+                    lookupObjectName = item.compositeTargetObject;
+                    returnField = item.returnField || '';
+                }
+                // For composite lookup: use lookupObjectName (already set)
+                console.log('  Final lookupMapping:', lookupMapping);
+                
             } else if (item.isLookup && item.lookupField1) {
-                lookupMapping = item.lookupField1.toLowerCase();
+                // For non-composite lookups
+                console.log('>>> ENTERING NON-COMPOSITE LOOKUP BRANCH for', item.csvFieldName);
+                lookupMapping = item.lookupField1;
             } else if (!item.isLookup && item.targetObject) {
-                // For non-lookup cross-object mapping
+                // For single non-lookup cross-object mapping
+                console.log('>>> ENTERING SINGLE NON-LOOKUP BRANCH for', item.csvFieldName);
                 lookupObjectName = item.targetObject;
                 lookupMapping = item.matchField || '';
                 returnField = item.returnField || '';
             }
+            
+            console.log('tableData - returning object for', item.csvFieldName, '{ lookupObjectName:', lookupObjectName, ', lookupField1:', lookupMapping, ', returnField:', returnField, '}');
+            
             return {
                 ...item,
                 lookupObjectName,
@@ -742,7 +863,12 @@ export default class CsvFieldMapper extends LightningElement {
                 lookupField1: '',
                 selectedLookupFields: '',
                 extraCsvField: '',
-                isComposite: true
+                isComposite: true,
+                targetObject: '',
+                targetObjectFields: [],
+                compositeTargetObjectFields: [],
+                matchField: '',
+                returnField: ''
             }];
             // Mark this section as mapped and disable button only for this section
             section.isMapped = true;
@@ -756,6 +882,25 @@ export default class CsvFieldMapper extends LightningElement {
             this.showToast('Error', 'Please select at least two columns to create a composite mapping.', 'error');
         }
     }
+
+          handleDeleteColumnMapping(event) {
+            // Get the column value (keyField) from the button's data attribute
+            const keyField = event.currentTarget.dataset.columnvalue;
+            // Remove from selectedDropdownValues (main mapping array)
+            this.selectedDropdownValues = this.selectedDropdownValues.filter(
+                mapping => mapping.keyField !== keyField
+            );
+            // Remove from csvHeaderOptions (for non-composite columns)
+            this.csvHeaderOptions = this.csvHeaderOptions.filter(
+                col => col.value !== keyField
+            );
+            // Remove from compositeHeaderOptions (for composite columns)
+            this.compositeHeaderOptions = this.compositeHeaderOptions.filter(
+                col => col.value !== keyField
+            );
+            // Show toast for feedback
+            this.showToast('Deleted', 'Column mapping removed.', 'success');
+        }
  
     handleDeleteCompositeMapping(event) {
         const mappingId = parseInt(event.currentTarget.dataset.id, 10);
@@ -792,30 +937,41 @@ export default class CsvFieldMapper extends LightningElement {
  
     // Get all header options for rendering (original + composite columns)
     get allHeaderOptions() {
-        console.log('=== allHeaderOptions getter called ===');
         const base = [...this.csvHeaderOptions, ...this.compositeHeaderOptions];
-        // Merge in mapping state for each header so template can show lookup sub-fields
         return base.map(col => {
             const sd = this.selectedDropdownValues.find(s => s.keyField === col.value);
             let compositeDropdowns = [];
-           
             // Use sd.value if composite, otherwise use col.value
             const keyToSplit = sd && sd.value ? sd.value : col.value;
             if (col.isComposite && keyToSplit) {
                 const parts = keyToSplit.split(',').map(s => s.trim());
+                // For composite non-lookup: use compositeTargetObjectFields if targetObject is set
+                // For composite lookup: use lookupObjectOptions
+                let options = [];
+                if (sd && sd.targetObject && sd.compositeTargetObjectFields) {
+                    // Non-lookup composite with target object selected
+                    options = [...sd.compositeTargetObjectFields];
+                } else if (sd && sd.lookupObjectOptions) {
+                    // Lookup composite
+                    options = [...sd.lookupObjectOptions];
+                }
                 compositeDropdowns = parts.map(part => {
-                    const propName = 'lookupField_' + part;
-                    console.log("wsf",part,propName, sd ? sd[propName] : '' , sd && sd.lookupObjectOptions ? sd.lookupObjectOptions : []);
+                    let partOptions = options;
+                    // Value for non-lookup composite: sd.lookupField_[part]
+                    let value = '';
+                    if (sd && sd['lookupField_' + part] !== undefined) {
+                        value = sd['lookupField_' + part];
+                    }
                     return {
                         label: part,
-                        value: sd && sd[propName] ? sd[propName] : '',
-                        options: sd && sd.lookupObjectOptions ? sd.lookupObjectOptions : [],
+                        value: value,
+                        options: partOptions,
                         name: part,
                         compositeLabel: 'Field: ' + part + ' - Corresponding SF Field'
                     };
-                }
-            );
+                });
             }
+            console.log('allHeaderOptions - col:', col.value, 'isComposite:', col.isComposite, 'keyToSplit:', keyToSplit, 'compositeDropdowns length:', compositeDropdowns.length, 'compositeDropdowns:', compositeDropdowns, 'targetObject:', sd ? sd.targetObject : 'none', 'compositeTargetObjectFields:', sd ? sd.compositeTargetObjectFields : 'none');
             return {
                 ...col,
                 mappedField: sd ? sd.selectedField : '',
@@ -829,6 +985,7 @@ export default class CsvFieldMapper extends LightningElement {
                 // Cross-object mapping fields (for non-lookup only)
                 targetObject: sd ? sd.targetObject : '',
                 targetObjectFields: sd ? (sd.targetObjectFields || []) : [],
+                compositeTargetObjectFields: sd ? (sd.compositeTargetObjectFields || []) : [],
                 matchField: sd ? sd.matchField : '',
                 returnField: sd ? sd.returnField : ''
             };
