@@ -1,3 +1,10 @@
+.column-checkbox-card lightning-input .slds-form-element__label {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    width: 100%;
+    display: inline-block;
+}
 /* Custom badge for selected unique key columns */
 .custom-badge {
     padding: 0.35rem 0.9rem;
@@ -55,16 +62,19 @@
  
 .columns-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+    min-width: 700px;
 }
  
 .column-checkbox-card {
     background: white;
-    padding: 8px 12px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 5px;
     border: 1px solid #dddbda;
-    border-radius: 4px;
-    transition: all 0.2s;
+    border-radius: 6px;
+    box-sizing: border-box;
 }
  
 .column-checkbox-card:hover {
