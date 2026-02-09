@@ -76,6 +76,9 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
                 uniqueKeyMappings = [SELECT File_Column_Name__c, Field_to_update__c, is_lookup__c, Lookup_Field__c FROM Data_Feed_Mapping__c WHERE File_Name__c = :fileToBeProcessed AND Operation__c = :operationType AND SObject_API_Name__c = :targetObj  AND Field_to_update__c = 'Id'];
                 for (Data_Feed_Mapping__c m : uniqueKeyMappings) {
                     System.debug(m);
+                    if (m.is_lookup__c && m.Lookup_Field__c != null && m.Lookup_Field__c.contains(',')) {
+                        continue;
+                    }
                     targetCsvCols.add(m.File_Column_Name__c);
                     if (m.is_lookup__c == true && String.valueOf(m.Field_to_update__c).toLowerCase() == 'id') {
                         targetSfFields.add(m.Lookup_Field__c);
@@ -90,6 +93,8 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
                     targetCsvCols.add(m.File_Column_Name__c);
                     targetSfFields.add(m.Field_to_update__c);
                 }
+                system.debug('targetCsvCols'+targetCsvCols);
+                system.debug('targetSfFields'+targetSfFields);
             }
  
             // Deserialize records
@@ -143,6 +148,7 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
                     existingRecordMap.put(key, (Id)s.get('Id'));
                 }
             }
+            system.debug('existingRecordMap'+existingRecordMap);
  
             // ...existinuniqueKeyMappingsg code for lookupRecordsMap...
             for(Map<String,Object> mp: dataFeedRecords)
@@ -337,12 +343,12 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
                         }
                         if (existingRecordMap.containsKey(rowKey)) {
                             targetRecord.put('Id', existingRecordMap.get(rowKey));
-                        } else if (operationType == 'Update') {
-                            throw new DmlException('No existing record found for composite key: ' + rowKey);
                         }
+                        system.debug('rowKey'+rowKey);
+                        system.debug('targetRecord'+targetRecord);
                         // For Upsert: do NOT throw, just don't set Id (will be insert)
                     }
- 
+                    
                     // Prepare field describe map for type conversion
                     Schema.SObjectType objType = Schema.getGlobalDescribe().get(targetObj);
                     Map<String, Schema.SObjectField> fieldMap = objType.getDescribe().fields.getMap();
@@ -415,31 +421,59 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
                             targetRecord.put(sfField, value);
                             System.debug('targetRecord'+targetRecord);
                         }
-                        if(lookupColumnMapping.get(key)!=NULL) {
-                            System.debug('lookupColumnMapping.get(key)'+lookupColumnMapping.get(key));
-                            System.debug('(lookupResultsMap.get(key)).get(String.valueof(dataFeedRecord.get(key)))'+(lookupResultsMap.get(key)).get(String.valueof(dataFeedRecord.get(key))));
-                            targetRecord.put(lookupColumnMapping.get(key),(lookupResultsMap.get(key)).get(String.valueof(dataFeedRecord.get(key))));
-                        }
-                        for(String compositeKey:lookupColumnMapping.keyset()) {
-                            if(compositeKey.contains(key) && compositeKey.contains(',')) {
-                                List<String> fileColumns=compositeKey.split(',');
-                                String tempStr='';
-                                for(String temp:fileColumns) {
-                                    tempStr+=dataFeedRecord.get(temp);
+                    //     if(lookupColumnMapping.get(key)!=NULL) {
+                    //         System.debug('lookupColumnMapping.get(key)'+lookupColumnMapping.get(key));
+                    //         System.debug('(lookupResultsMap.get(key)).get(String.valueof(dataFeedRecord.get(key)))'+(lookupResultsMap.get(key)).get(String.valueof(dataFeedRecord.get(key))));
+                    //         targetRecord.put(lookupColumnMapping.get(key),(lookupResultsMap.get(key)).get(String.valueof(dataFeedRecord.get(key))));
+                    //     }
+                    //     for(String compositeKey:lookupColumnMapping.keyset()) {
+                    //         if(compositeKey.contains(key) && compositeKey.contains(',')) {
+                    //             List<String> fileColumns=compositeKey.split(',');
+                    //             String tempStr='';
+                    //             for(String temp:fileColumns) {
+                    //                 tempStr+=dataFeedRecord.get(temp);
+                    //             }
+                    //             System.debug('lookupColumnMapping'+lookupColumnMapping);
+                    //             System.debug('compositeKey'+compositeKey);
+                    //             System.debug('tempStr'+tempStr);
+                    //             System.debug('lookupColumnMapping.get(compositeKey'+lookupColumnMapping.get(compositeKey));
+                    //             System.debug('(lookupResultsMap.get(compositeKey))'+(lookupResultsMap.get(compositeKey)));
+                    //             System.debug('(lookupResultsMap.get(compositeKey)).get(tempStr)'+(lookupResultsMap.get(compositeKey)).get(tempStr));
+                    //             targetRecord.put(lookupColumnMapping.get(compositeKey),(lookupResultsMap.get(compositeKey)).get(tempStr));
+                    //         }
+                    //     }
+                    // }
+                    for(Data_Feed_Mapping__c mapConfig : lookupMappings)
+                    {
+                        String csvKey = mapConfig.File_Column_Name__c;
+                   
+                            // Reconstruct key from current CSV Row Data
+                            List<String> cols = csvKey.split(',');
+                            String csvCompositeValue = '';
+                            Boolean missingData = false;
+                       
+                            for(String c : cols) {
+                                Object val = dataFeedRecord.get(c.trim());
+                                if(val == null) { missingData = true; break; }
+                                csvCompositeValue += String.valueOf(val);
+                            }
+                       
+                            if(!missingData) {
+                                Map<String,String> resMap = lookupResultsMap.get(csvKey);
+                                if(resMap != null && resMap.containsKey(csvCompositeValue)) {
+                                 // This sets the value. If Field_to_update__c is 'Id', it sets the ID for Update.
+                                    targetRecord.put(mapConfig.Field_to_update__c, resMap.get(csvCompositeValue));
                                 }
-                                System.debug('lookupColumnMapping'+lookupColumnMapping);
-                                System.debug('compositeKey'+compositeKey);
-                                System.debug('tempStr'+tempStr);
-                                System.debug('lookupColumnMapping.get(compositeKey'+lookupColumnMapping.get(compositeKey));
-                                System.debug('(lookupResultsMap.get(compositeKey))'+(lookupResultsMap.get(compositeKey)));
-                                System.debug('(lookupResultsMap.get(compositeKey)).get(tempStr)'+(lookupResultsMap.get(compositeKey)).get(tempStr));
-                                targetRecord.put(lookupColumnMapping.get(compositeKey),(lookupResultsMap.get(compositeKey)).get(tempStr));
                             }
                         }
                     }
+                    if(operationType == 'Update' && targetRecord.get('Id') == null)
+                    {
+                        throw new DmlException('No existing record found for update. Key lookup failed.');
+                    }
                     records.add(targetRecord);
                 } catch(Exception e) {
-                    d.Is_Processed__c = true;
+                    d.Is_Processed__c = true;  
                     d.Error_Message__c = (operationType == 'Update' ? 'Error preparing record for update: ' : 'Error preparing record for insert: ') + e.getMessage() + ' at line ' + e.getLineNumber();
                     records.add(null);
                 }
@@ -452,10 +486,24 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
             Map<Integer, Integer> originalIndexMap = new Map<Integer, Integer>();
  
             // Filter out any nulls that were added from preparation errors
+            // Deduplicate by Id to avoid 'Duplicate id in list' error
+            Map<Id, SObject> uniqueRecordsMap = new Map<Id, SObject>();
             for(Integer i = 0; i < records.size(); i++){
-                if(records[i] != null){
-                    originalIndexMap.put(recordsToProcess.size(), i); // Map new list index to original scope index
-                    recordsToProcess.add(records[i]);
+                SObject rec = records[i];
+                if(rec != null){
+                    Id recId = (Id)rec.get('Id');
+                    if(recId != null){
+                        // Only keep the first occurrence
+                        if(!uniqueRecordsMap.containsKey(recId)){
+                            uniqueRecordsMap.put(recId, rec);
+                            originalIndexMap.put(recordsToProcess.size(), i); // Map new list index to original scope index
+                            recordsToProcess.add(rec);
+                        }
+                    } else {
+                        // For inserts (no Id yet), just add
+                        originalIndexMap.put(recordsToProcess.size(), i);
+                        recordsToProcess.add(rec);
+                    }
                 }
             }
             if(!recordsToProcess.isEmpty()) {
@@ -464,8 +512,12 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
  
                 // 2. Perform the specific database operation
                 if (operationType == 'Upsert') {
+                   
+                    system.debug(recordsToProcess);
                     upsertResults = Database.upsert(recordsToProcess,false);
+                    system.debug('upsertResults'+upsertResults);
                 } else if (operationType == 'Update') {
+                    System.debug(recordsToProcess);
                     saveResults = Database.update(recordsToProcess, false);
                 } else {
                     saveResults = Database.insert(recordsToProcess, false);
@@ -508,6 +560,7 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
                 dfr.Is_Processed__c = true; // Mark as processed regardless of outcome
                 if (errorMap.containsKey(dfr.Id)) {
                     dfr.Error_Message__c = errorMap.get(dfr.Id);
+                    dfr.Is_Failed__c = true;
                 } else if (dfr.Error_Message__c == null) {
                     dfr.Error_Message__c = null;
                 }
@@ -537,14 +590,15 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
                 try {
                     List<String> toAddresses = new List<String>();
                     if (jobTracker.CreatedBy != null && String.isNotBlank(jobTracker.CreatedBy.Email)) {
-                        toAddresses.add(jobTracker.CreatedBy.Email);
+                        // toAddresses.add(jobTracker.CreatedBy.Email);
+                        toAddresses.add('saritabegani76@gmail.com');
                     }
                     System.debug('toAddresses: ' + toAddresses);
                     if (!toAddresses.isEmpty()) {
                         Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
                         mail.setToAddresses(toAddresses);
                         String subject = 'Data Feed Processing Completed: ' + jobTracker.File_Name__c;
-                        String body = 'Hello,\n\nThe data feed file "' + jobTracker.File_Name__c + '" has finished processing.\n\n' +
+                        String body = 'Dear Team,\n\nThe data feed file "' + jobTracker.File_Name__c + '" has finished processing.\n\n' +
                                       'Operation: ' + jobTracker.Operation_Type__c + '\n' +
                                       'Target Object: ' + jobTracker.Target_Object__c + '\n' +
                                       'Total Records: ' + totalRecords + '\n' +
@@ -569,3 +623,4 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
             // }
         }
 }
+ 
