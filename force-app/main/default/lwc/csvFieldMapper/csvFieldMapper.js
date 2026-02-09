@@ -893,7 +893,7 @@ export default class CsvFieldMapper extends LightningElement {
         } else {
             this.showToast('Error', 'Please select at least two columns to create a composite mapping.', 'error');
         }
-    }
+    }    
  
           handleDeleteColumnMapping(event) {
             const keyField = event.currentTarget.dataset.columnvalue;
