@@ -905,6 +905,9 @@ export default class CsvFieldMapper extends LightningElement {
             this.csvHeaderOptions = this.csvHeaderOptions.filter(
                 col => col.value !== keyField
             );
+            // this.compositeHeaderOptions = this.compositeHeaderOptions.filter(
+            //     col => col.value !== keyField
+            // );
             this.showToast('Delete', 'Column mapping removed.', 'success');
         }
  
@@ -1018,9 +1021,21 @@ export default class CsvFieldMapper extends LightningElement {
     get uniqueKeyColumnsForCheckbox() {
         return this.uniqueKeyHeaderOptions;
     }
-    get compositeColumnsForCheckbox() {
-        // Return all original CSV headers that haven't been used as composite keys
-        // This ensures deleted columns remain available for composite mapping
+    // get compositeColumnsForCheckbox() {
+    //     // Return all original CSV headers that haven't been used as composite keys
+    //     // This ensures deleted columns remain available for composite mapping
+    //     const compositeKeyValues = this.compositeHeaderOptions
+    //         .filter(opt => opt.isComposite)
+    //         .map(opt => opt.value);
+        
+    //     return this.csvHeaders.map(header => ({
+    //         label: header,
+    //         value: header,
+    //         isChecked: false,
+    //         isComposite: false
+    //     })).filter(col => !compositeKeyValues.includes(col.value));
+    // }
+       get compositeColumnsForCheckbox() {
         const compositeKeyValues = this.compositeHeaderOptions
             .filter(opt => opt.isComposite)
             .map(opt => opt.value);
@@ -1032,6 +1047,7 @@ export default class CsvFieldMapper extends LightningElement {
             isComposite: false
         })).filter(col => !compositeKeyValues.includes(col.value));
     }
+ 
  
     showToast(title, message, variant) {
         const event = new ShowToastEvent({
