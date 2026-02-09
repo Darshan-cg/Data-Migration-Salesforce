@@ -42,16 +42,18 @@ public with sharing class CSVConfigurationMapping {
                 Data_Feed_Mapping__c mapping = new Data_Feed_Mapping__c();
                 mapping.Operation__c = wrapper.operationType;
                 mapping.File_Name__c = wrapper.fileName;
-                mapping.File_Column_Name__c = String.isEmpty(mp.extraCsvField) ?  mp.csvFieldName : mp.csvFieldName + ',' + mp.extraCsvField;
                 mapping.Field_to_update__c = mp.selectedField;
+                mapping.File_Column_Name__c = mp.csvFieldName;
                 mapping.SObject_API_Name__c = wrapper.objectName;
-                mapping.Lookup_Object_Name__c = mp.lookupObject;
+                if (mp.isLookup) {
+                    mapping.Lookup_Object_Name__c = mp.targetObject != '' ? mp.targetObject : mp.lookupObject;
+                    mapping.Lookup_Field__c = mp.matchField != '' ? mp.matchField : mp.selectedLookupFields;
+                } 
                 mapping.Is_Lookup__c = mp.isLookup;
-                mapping.Lookup_Field__c = mp.selectedLookupFields;
                 mapping.Lookup_Filter_Criteria__c = mp.whereClause;
-                mapping.Lookup_Return_Field__c = 'Id';
+                mapping.Lookup_Return_Field__c = mp.returnField != '' ? mp.returnField : 'Id';
                 // Set the unique key flag for Update operations
-                if (wrapper.operationType == 'Upsert' && mp.isUniqueKey != null) {
+                if (wrapper.operationType == 'Upsert' && mp.isUniqueKey != false) {
                     mapping.put('Is_Unique_Key__c', mp.isUniqueKey);
                 }
                 system.debug('MAPPING VALUES: Operation__c=' + mapping.Operation__c + ', File_Name__c=' + mapping.File_Name__c + ', File_Column_Name__c=' + mapping.File_Column_Name__c + ', Field_to_update__c=' + mapping.Field_to_update__c + ', SObject_API_Name__c=' + mapping.SObject_API_Name__c + ', Lookup_Object_Name__c=' + mapping.Lookup_Object_Name__c + ', Is_Lookup__c=' + mapping.Is_Lookup__c + ', Lookup_Field__c=' + mapping.Lookup_Field__c + ', Lookup_Filter_Criteria__c=' + mapping.Lookup_Filter_Criteria__c + ', Lookup_Return_Field__c=' + mapping.Lookup_Return_Field__c + ', Is_Unique_Key__c=' + (wrapper.operationType == 'Upsert' ? String.valueOf(mp.isUniqueKey) : 'N/A'));
@@ -88,6 +90,8 @@ public with sharing class CSVConfigurationMapping {
         @AuraEnabled public String lookupObject {get; set;}
         @AuraEnabled public String whereClause {get; set;}
         @AuraEnabled public Boolean isUniqueKey {get; set;}
-        @AuraEnabled public String extraCsvField {get; set;}
+        @AuraEnabled public String targetObject {get; set;}
+        @AuraEnabled public String matchField {get; set;}
+        @AuraEnabled public String returnField {get; set;}
     }
 }
