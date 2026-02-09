@@ -907,9 +907,9 @@ export default class CsvFieldMapper extends LightningElement {
                 col => col.value !== keyField
             );
             // Remove from compositeHeaderOptions (for composite columns)
-            this.compositeHeaderOptions = this.compositeHeaderOptions.filter(
-                col => col.value !== keyField
-            );
+            // this.compositeHeaderOptions = this.compositeHeaderOptions.filter(
+            //     col => col.value !== keyField
+            // );
             // Show toast for feedback
             this.showToast('Deleted', 'Column mapping removed.', 'success');
         }
@@ -1037,5 +1037,18 @@ export default class CsvFieldMapper extends LightningElement {
         this.dispatchEvent(event);
     }
  
+    get compositeColumnsForCheckbox() {
+        const compositeKeyValues = this.compositeHeaderOptions
+            .filter(opt => opt.isComposite)
+            .map(opt => opt.value);
+       
+        return this.csvHeaders.map(header => ({
+            label: header,
+            value: header,
+            isChecked: false,
+            isComposite: false
+        })).filter(col => !compositeKeyValues.includes(col.value));
+    }
+
 }
  
