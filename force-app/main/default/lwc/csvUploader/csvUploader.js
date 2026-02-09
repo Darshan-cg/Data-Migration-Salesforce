@@ -1,12 +1,10 @@
-
 import { LightningElement, track } from 'lwc';
 import uploadToApex from '@salesforce/apex/CSVUploaderController.uploadToApex';
 import updateDataFeedJobTrackerStatus from '@salesforce/apex/CSVUploaderController.updateDataFeedJobTrackerStatus';
 import getPresignedUrl from '@salesforce/apex/CSVUploaderController.getPresignedUrl';
-import invokeProcessDataFeedBatch from '@salesforce/apex/CSVUploaderController.invokeProcessDataFeedBatch';
 import getObjects from '@salesforce/apex/CSVDataController.getObjects';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
-
+ 
 export default class csvUploader extends LightningElement {
     chunkSize = 200; // Number of rows to send in each chunk
     @track showMappingChoiceModal = false;
@@ -23,26 +21,26 @@ export default class csvUploader extends LightningElement {
     @track progressValue=0;
     @track processedRecords = 0;
     @track message;
-    
+   
     // Unique key selection modal and state
     @track selectedUniqueKey = '';
  
     fileName = '';
     ObjectIsSelected=false;
     OperationIsSelected=false;
-    
+   
     get showUniqueKeyCombobox() {
         return this.selectedOperation === 'Update' && this.headersArray && this.headersArray.length > 0;
     }
-
+ 
     get uniqueKeyColumnOptions() {
         return (this.headersArray || []).map(h => ({ label: h, value: h }));
     }
-
+ 
     handleUniqueKeyChange(event) {
         this.selectedUniqueKey = event.detail.value;
     }
-    
+   
      get currentStep() {
          if (this.showImportCard) {
              return '1';
@@ -139,11 +137,11 @@ export default class csvUploader extends LightningElement {
         this.showHeaderBlocks = false;
         this.showMappingChoiceModal = true;
     }
-
+ 
     handleUniqueKeyTypeSelect(event) {
         this.uniqueKeyType = event.target.value;
     }
-
+ 
     handleUniqueKeyTypeNext() {
         if (!this.uniqueKeyType) {
             // Optionally show error/toast
@@ -154,13 +152,13 @@ export default class csvUploader extends LightningElement {
         this.showHeaderBlocks = false;
         this.showMappingChoiceModal = true;
     }
-
+ 
     handleCreateNewMapping() {
         this.showMappingChoiceModal = false;
         this.showHeaderBlocks = true;
         this.showProgressBar = false;
     }
-
+ 
     handleUseExistingMapping() {
         this.showMappingChoiceModal = false;
         this.showHeaderBlocks = false;
@@ -187,13 +185,14 @@ export default class csvUploader extends LightningElement {
         }
         return jsonData;
     }
-
+ 
     // Process CSV file
     async processCSV() {
         this.showProgressBar = true;
         this.showHeaderBlocks = false;
         if (this.csvFileContent) {
             let name = this.fileName;
+
             // let name = this.fileName;
             // let ext = '';
             // if (name.includes('.')) {
@@ -207,12 +206,9 @@ export default class csvUploader extends LightningElement {
             // let uploadSuccess = false;
             // try {
             //     this.fileName = this.fileName + '_' + this.selectedOperation + '_' + this.selectedObject;
-            //     // Get pre-signed URL from Apex
-            //     console.log('Updated Name',this.fileName);
+            //     console.log('Updated Name', this.fileName);
             //     const presignedUrl = await getPresignedUrl({ fileName: this.fileName });
             //     console.log('Presigned URL:', presignedUrl);
-            //     // Upload file to S3 using fetch
-            //     //console.log('Presigned URL:', presignedUrl);
             //     const uploadResponse = await fetch(presignedUrl, {
             //         method: 'PUT',
             //         headers: { 'Content-Type': 'text/csv' },
@@ -231,16 +227,7 @@ export default class csvUploader extends LightningElement {
             //     this.showProgressBar = false;
             //     return;
             // }
-            // const jsonData = this.parseCSV(this.csvFileContent); // Parse CSV to JSON
-         
-            // }
-
-            // if (!uploadSuccess) {
-            //     this.showProgressBar = false;
-            //     return;
-            // }
-
-            const jsonData = this.parseCSV(this.csvFileContent); // Parse CSV to JSON
+              const jsonData = this.parseCSV(this.csvFileContent); // Parse CSV to JSON
             if (!jsonData) {
                 // Error already shown, stop processing
                 console.log('CSV parsing failed. Stopping process.');
@@ -258,15 +245,13 @@ export default class csvUploader extends LightningElement {
             console.error('No file uploaded. Please upload a CSV file before clicking Next.');
         }
     }
-
+ 
     previousPage() {
                 this.showHeaderBlocks = false;
                 this.showImportCard = true;
                 this.showProgressBar = false;
-                // Optionally reset mapping state if needed
     }
-
-    // Go to Upload Page from Progress Page
+ 
     goToUploadPage() {
         this.showProgressBar = false;
         this.showImportCard = true;
@@ -283,62 +268,12 @@ export default class csvUploader extends LightningElement {
         this.selectedUniqueKey = '';
     }
  
-    // parseCSVRow(row, expectedFieldCount) {
-    //     const fields = [];
-    //     let current = '';
-    //     let insideQuotes = false;
- 
-    //     for (let i = 0; i < row.length; i++) {
-    //         const char = row[i];
- 
-    //         if (char === '"') {
-    //             // Toggle quote state
-    //             insideQuotes = !insideQuotes;
-    //         } else if (char === ',' && !insideQuotes) {
-    //             // Comma outside quotes = field separator
-    //             fields.push(current.trim());
-    //             current = '';
-    //         } else {
-    //             current += char;
-    //         }
-    //     }
- 
-    //     // Add the last field
-    //     if (current.length > 0) {
-    //         fields.push(current.trim());
-    //     }
- 
-    //     return fields;
-    // }
-
-    // Send data to Apex in chunks
     async sendDataInChunks(jsonData, fileName) {
-        const mapper = this.template.querySelector('c-csv-field-mapper');
-        let mappedColumns = null;
-        if (mapper && typeof mapper.getMappedCsvColumns === 'function') {
-            mappedColumns = mapper.getMappedCsvColumns();
-        }
         for (let i = 0; i < jsonData.length; i += this.chunkSize) {
             const chunk = jsonData.slice(i, i + this.chunkSize);
- 
-            // if(i === 0) {
-            //     await updateDataFeedJobTrackerStatus({status:'Ready for Processing', fileName:this.fileName, operationType:this.selectedOperation,targetObject:this.selectedObject});
-            // }
- 
-            // Convert each JSON object in the chunk to a JSON string
-            // const jsonStringList = chunk.map(record => JSON.stringify(record));
-            // console.log('json:',jsonStringList);
-                const filteredChunk = mappedColumns
-                ? chunk.map(record => {
-                    const filtered = {};
-                    mappedColumns.forEach(col => {
-                        if (record.hasOwnProperty(col)) filtered[col] = record[col];
-                    });
-                    return filtered;
-                })
-                : chunk;
-                const jsonStringList = filteredChunk.map(record => JSON.stringify(record));
-
+            
+            const jsonStringList = chunk.map(record => JSON.stringify(record));
+            console.log('json:',jsonStringList);
             try {
                 // Send the chunk to Apex
                 await uploadToApex({ jsonDataList: jsonStringList, fileName: fileName });

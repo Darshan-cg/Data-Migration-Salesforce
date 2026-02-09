@@ -75,7 +75,7 @@ export default class CsvFieldMapper extends LightningElement {
         return this.selectedOperation === 'Upsert' && (this.csvHeaderOptions.length > 0 || this.compositeHeaderOptions.length > 0);
     }
     
-    // --- Unique Key Section Logic ---
+   
     get uniqueKeyCreated() {
         return this.createdUniqueKeyColumns.length > 0;
     }
@@ -217,7 +217,7 @@ export default class CsvFieldMapper extends LightningElement {
         } else {
             this.selectedUniqueKeyColumns = this.selectedUniqueKeyColumns.filter(col => col !== value);
         }
-        // Sync UI for unique key checkboxes only
+
         this.uniqueKeyHeaderOptions = this.uniqueKeyHeaderOptions.map(opt => ({
             ...opt,
             isSelected: this.selectedUniqueKeyColumns.includes(opt.value)
@@ -397,12 +397,22 @@ export default class CsvFieldMapper extends LightningElement {
  
                 isLookup = !!(this.fieldsWithLookupList && this.fieldsWithLookupList.some(f => f.apiName === selectedValue));
                 console.log("whereClause"+this.uniqueIdentifierWhereClause);
+                  let returnField = this.selectedDropdownValues[index].returnField;
+                if (
+                    isLookup &&
+                    selectedValue &&
+                    typeof selectedValue === 'string' &&
+                    selectedValue.trim().toLowerCase().endsWith('id')
+                ) {
+                    returnField = 'Id';
+                }
                 this.selectedDropdownValues[index] = {
                     ...this.selectedDropdownValues[index],
                     selectedField: selectedValue,
                     isLookup: isLookup,
                     whereClause: this.uniqueIdentifierWhereClause || '',
                     selectedLookupFields: isLookup ? (this.selectedDropdownValues[index].selectedLookupFields || []) : [],
+                    returnField: returnField || ''
                 };
                
                 if(selectedValue === 'Id') {
@@ -577,7 +587,7 @@ export default class CsvFieldMapper extends LightningElement {
         return this.selectedValues[header] || '';
     }
    
-        handleDeleteCompositeSection(event) {
+     handleDeleteCompositeSection(event) {
         const sectionId = parseInt(event.currentTarget.dataset.sectionid, 10);
         // Remove the section
         this.compositeSections = this.compositeSections.filter(sec => sec.id !== sectionId);
@@ -591,6 +601,8 @@ export default class CsvFieldMapper extends LightningElement {
             this.csvHeaders = this.csvHeaders.filter(h => h !== compositeKey);
             this.createdCompositeMappings = this.createdCompositeMappings.filter(m => m.id !== sectionId);
         }
+            // Re-index section ids to be sequential
+            this.compositeSections = this.compositeSections.map((sec, idx) => ({ ...sec, id: idx }));
     }
     
     createMapping() {
@@ -927,9 +939,14 @@ export default class CsvFieldMapper extends LightningElement {
         this.createdCompositeMappings = this.createdCompositeMappings.filter(
             mapping => mapping.id !== mappingId
         );
+         this.compositeSections = this.compositeSections.filter(sec => sec.id !== sectionId);
+          this.compositeSections = this.compositeSections.map((sec, idx) => ({ ...sec, id: idx }));
         console.log('Mapping deleted, remaining:', this.createdCompositeMappings);
         console.log('Updated csvHeaders:', this.csvHeaders);
     }
+
+    
+
  
     get hasCompositeMappings() {
         return this.createdCompositeMappings && this.createdCompositeMappings.length > 0;
