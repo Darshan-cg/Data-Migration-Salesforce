@@ -1,27 +1,65 @@
 public with sharing class CSVDataController {
     
     @AuraEnabled(cacheable=true)
-    public static List<SObjectDescribe> getObjects() {
+   public static List<SObjectDescribe> getObjects() {
         List<SObjectDescribe> result = new List<SObjectDescribe>();
-        try{
-    	Map<String, Schema.SObjectType> gd = Schema.getGlobalDescribe();
-    
-    	for (Schema.SObjectType objType : gd.values()) {
-        	Schema.SObjectField field = objType.getDescribe().fields.getMap().values().iterator().next();
-        	if(objType.getDescribe().getName() == 'Account' 
-            || objType.getDescribe().getName() == 'Contact' 
-            || objType.getDescribe().getName() == 'Lead' 
-            || objType.getDescribe().getName() == 'Opportunity' 
-            || objType.getDescribe().getName() == 'User' 
-            || objType.getDescribe().getName() == 'Task' 
-            || objType.getDescribe().getName() == 'Event' 
-            || objType.getDescribe().getName() == 'Case'){
-            	result.add(new SObjectDescribe(objType.getDescribe().getLabel(), objType.getDescribe().getName()));
-    	}
-        }
-    }
-        catch(exception ex){
-            system.debug('exception: ' + ex.getMessage());
+        try {
+            Map<String, Schema.SObjectType> gd = Schema.getGlobalDescribe();
+            for (Schema.SObjectType objType : gd.values()) {
+                Schema.DescribeSObjectResult describe = objType.getDescribe();
+                // Exclude system/internal objects, only include queryable and not deprecated objects
+                if (!describe.isCustomSetting() && !describe.isDeprecatedAndHidden() && describe.isQueryable()
+                    && !describe.getName().startsWith('Aura')
+                    && !describe.getName().startsWith('Feed')
+                    && !describe.getName().startsWith('UserProv')
+                    && !describe.getName().endsWith('Share')
+                    && !describe.getName().endsWith('History')
+                    && !describe.getName().endsWith('ChangeEvent')
+                    && !describe.getName().endsWith('Feed')
+                    && !describe.getName().endsWith('Tag')
+                    && !describe.getName().endsWith('ViewStat')
+                    && !describe.getName().endsWith('VoteStat')
+                    && !describe.getName().endsWith('DataStat')
+                    && !describe.getName().endsWith('CleanInfo')
+                    && !describe.getName().endsWith('DuplicateRule')
+                    && !describe.getName().endsWith('DuplicateRecordItem')
+                    && !describe.getName().endsWith('DuplicateRecordSet')
+                    && !describe.getName().endsWith('DuplicateJob')
+                    && !describe.getName().endsWith('DuplicateRuleFilter')
+                    && !describe.getName().endsWith('DuplicateRuleMatchRule')
+                    && !describe.getName().endsWith('DuplicateRuleMatchRuleItem')
+                    && !describe.getName().endsWith('DuplicateRuleMatchRuleSet')
+                    && !describe.getName().endsWith('DuplicateRuleMatchRuleSetItem')
+                    && !describe.getName().endsWith('DuplicateRuleMatchRuleSetRule')
+                    && !describe.getName().endsWith('DuplicateRuleMatchRuleSetRuleItem')
+                    && !describe.getName().endsWith('DuplicateRuleMatchRuleSetRuleSet')
+                    && !describe.getName().endsWith('DuplicateRuleMatchRuleSetRuleSetItem')
+                    && !describe.getName().endsWith('DuplicateRuleMatchRuleSetRuleSetRule')
+                    && !describe.getName().endsWith('DuplicateRuleMatchRuleSetRuleSetRuleItem')
+                    && !describe.getName().endsWith('DuplicateRuleMatchRuleSetRuleSetRuleSet')
+                    && !describe.getName().endsWith('DuplicateRuleMatchRuleSetRuleSetRuleSetItem')
+                    && !describe.getName().endsWith('DuplicateRuleMatchRuleSetRuleSetRuleSetRule')
+                    && !describe.getName().endsWith('DuplicateRuleMatchRuleSetRuleSetRuleSetRuleItem')
+                    && !describe.getName().endsWith('DuplicateRuleMatchRuleSetRuleSetRuleSetRuleSet')
+                    && !describe.getName().endsWith('DuplicateRuleMatchRuleSetRuleSetRuleSetRuleSetItem')
+                    && !describe.getName().endsWith('DuplicateRuleMatchRuleSetRuleSetRuleSetRuleSetRule')
+                    && !describe.getName().endsWith('DuplicateRuleMatchRuleSetRuleSetRuleSetRuleSetRuleItem')
+                    && !describe.getName().endsWith('DuplicateRuleMatchRuleSetRuleSetRuleSetRuleSetRuleSet')
+                    && !describe.getName().endsWith('DuplicateRuleMatchRuleSetRuleSetRuleSetRuleSetRuleSetItem')
+                    && !describe.getName().endsWith('DuplicateRuleMatchRuleSetRuleSetRuleSetRuleSetRuleSetRule')
+                    && !describe.getName().endsWith('DuplicateRuleMatchRuleSetRuleSetRuleSetRuleSetRuleSetRuleItem')
+                    && !describe.getName().endsWith('DuplicateRuleMatchRuleSetRuleSetRuleSetRuleSetRuleSetRuleSet')
+                    && !describe.getName().endsWith('DuplicateRuleMatchRuleSetRuleSetRuleSetRuleSetRuleSetRuleSetItem')
+                    && !describe.getName().endsWith('DuplicateRuleMatchRuleSetRuleSetRuleSetRuleSetRuleSetRuleSetRule')
+                    && !describe.getName().endsWith('DuplicateRuleMatchRuleSetRuleSetRuleSetRuleSetRuleSetRuleSetRuleItem')
+                    && !describe.getName().endsWith('DuplicateRuleMatchRuleSetRuleSetRuleSetRuleSetRuleSetRuleSetRuleSet')
+                    && !describe.getName().endsWith('DuplicateRuleMatchRuleSetRuleSetRuleSetRuleSetRuleSetRuleSetRuleSetItem')
+                ) {
+                    result.add(new SObjectDescribe(describe.getLabel(), describe.getName()));
+                }
+            }
+        } catch (Exception ex) {
+            System.debug('Exception: ' + ex.getMessage());
         }
         return result;
     }

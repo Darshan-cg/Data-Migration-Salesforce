@@ -351,3 +351,57 @@ lightning-button:hover {
     font-weight: 600;
     color: #047857;
 }
+
+/* Search option dropdown item hover effect */
+.search-option:hover {
+    background-color: #f8f9fa;
+}
+.progress-simple-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+    padding: 2rem;
+}
+ 
+.progress-simple-card {
+    max-width: 600px;
+    width: 100%;
+    padding: 2rem;
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+ 
+.progress-simple-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+ 
+.progress-icon {
+    color: #0070d2;
+    margin-bottom: 1rem;
+}
+ 
+.progress-simple-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #333333;
+    margin: 0;
+}
+ 
+.progress-message-box {
+    background: #f5f5f5;
+    padding: 1rem;
+    border-left: 4px solid #0070d2;
+    border-radius: 4px;
+    margin-bottom: 1.5rem;
+}
+ 
+.progress-message-text {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #555555;
+    line-height: 1.5;
+}
