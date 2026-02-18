@@ -1,15 +1,18 @@
 import { LightningElement, track } from 'lwc';
 import uploadToApex from '@salesforce/apex/CSVUploaderController.uploadToApex';
 import updateDataFeedJobTrackerStatus from '@salesforce/apex/CSVUploaderController.updateDataFeedJobTrackerStatus';
-import getPresignedUrl from '@salesforce/apex/CSVUploaderController.getPresignedUrl';
 import getObjects from '@salesforce/apex/CSVDataController.getObjects';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
- 
+import getPresignedUrl from '@salesforce/apex/CSVUploaderController.getPresignedUrl';
+
 export default class csvUploader extends LightningElement {
-    chunkSize = 200; // Number of rows to send in each chunk
+    chunkSize = 200; 
     @track showMappingChoiceModal = false;
     @track csvFileContent = null;
     @track objectOptions = [];
+    @track filteredObjectOptions = [];
+    @track objectSearchTerm = '';
+    objectInputHasFocus = false;
     @track operationOptions = [];
     @track selectedOperation = '';
     @track selectedObject = '';
@@ -21,8 +24,9 @@ export default class csvUploader extends LightningElement {
     @track progressValue=0;
     @track processedRecords = 0;
     @track message;
-   
-    // Unique key selection modal and state
+    @track showObjectRecommendations = false;
+    
+    
     @track selectedUniqueKey = '';
  
     fileName = '';
@@ -51,7 +55,8 @@ export default class csvUploader extends LightningElement {
         }
         return '1';
     }
-    // Fetch available objects on component load
+    
+
     connectedCallback() {
         this.operationOptions = [
             { label: 'Insert', value: 'Insert' },
@@ -60,11 +65,47 @@ export default class csvUploader extends LightningElement {
         ];
         getObjects()
             .then(data => {
+                console.log('Objects loaded:', data);
                 this.objectOptions = data.map(obj => ({ label: obj.label, value: obj.apiName }));
+                this.filteredObjectOptions = this.objectOptions;
+                console.log('objectOptions after map:', this.objectOptions);
             })
             .catch(error => {
                 console.error('Error fetching objects:', error);
             });
+    }
+
+    handleObjectSearch(event) {
+        const inputValue = event.target.value || '';
+        const searchTerm = inputValue.toLowerCase().trim();
+        
+        this.objectSearchTerm = inputValue;
+        console.log('Search term:', searchTerm, 'objectOptions length:', this.objectOptions.length);
+        
+        if (!searchTerm) {
+            this.filteredObjectOptions = [];
+            this.showObjectRecommendations = false;
+            console.log('Empty search - hiding dropdown');
+        } else {
+            // Filter objects that contain the search term (case-insensitive)
+            const filtered = this.objectOptions.filter(opt => 
+                opt.label.toLowerCase().includes(searchTerm)
+            );
+            console.log('Filtered count:', filtered.length);
+            this.filteredObjectOptions = [...filtered];
+            // Always show recommendations dropdown when typing
+            this.showObjectRecommendations = true;
+            console.log('showObjectRecommendations SET TO TRUE');
+        }
+    }
+
+    handleObjectRecommendationClick(event) {
+        const value = event.currentTarget.dataset.value;
+        const label = event.currentTarget.dataset.label;
+        this.selectedObject = value;
+        this.ObjectIsSelected = true;
+        this.objectSearchTerm = label;
+        this.showObjectRecommendations = false;
     }
  
     handleFileUpload(event) {
@@ -80,22 +121,19 @@ export default class csvUploader extends LightningElement {
         this.fileName = name + ext;
         if (file) {
             const reader = new FileReader();
-            // Read the file asynchronously
             reader.onload = async () => {
                 this.csvFileContent = reader.result;
                 const lines = this.csvFileContent.split('\n').filter(line => line.trim() !== ''); // Filter out blank rows
                 let headers = lines[0].split(',');
-                // Trim whitespace and carriage returns from headers
                 headers = headers.map(h => h.trim().replace(/\r|\n/g, ''));
                 this.headersArray = headers;
-                this.totalRecords = lines.length - 1; // Exclude the header row
+                this.totalRecords = lines.length - 1; 
                 console.log('Parsed headers:', this.headersArray);
             };
             reader.readAsText(file);
         }
     }
    
-    // Handle object selection
     handleObjectChange(event) {
         this.ObjectIsSelected=true;
         this.selectedObject = event.detail.value;
@@ -107,7 +145,6 @@ export default class csvUploader extends LightningElement {
         }
     }
  
-    // Handle operation selection
     handleOperationChange(event) {
         this.OperationIsSelected=true;
         this.selectedOperation = event.detail.value;
@@ -130,9 +167,7 @@ export default class csvUploader extends LightningElement {
         );
     }
  
-    // Handle navigation to next page
     handleNextClick() {
-        // For both Insert and Update, go to mapping choice modal
         this.showImportCard = false;
         this.showHeaderBlocks = false;
         this.showMappingChoiceModal = true;
@@ -144,7 +179,6 @@ export default class csvUploader extends LightningElement {
  
     handleUniqueKeyTypeNext() {
         if (!this.uniqueKeyType) {
-            // Optionally show error/toast
             return;
         }
         this.showUniqueKeyTypeModal = false;
@@ -166,7 +200,6 @@ export default class csvUploader extends LightningElement {
         this.processCSV();
     }
  
-    // Convert CSV to JSON with validation for missing data
     parseCSV(csv) {
         const lines = csv.split('\n');
         const headers = lines[0].split(',');
@@ -186,70 +219,70 @@ export default class csvUploader extends LightningElement {
         return jsonData;
     }
  
-    // Process CSV file
     async processCSV() {
         this.showProgressBar = true;
         this.showHeaderBlocks = false;
         if (this.csvFileContent) {
             let name = this.fileName;
-
-            // let name = this.fileName;
-            // let ext = '';
-            // if (name.includes('.')) {
-            //     ext = name.substring(name.lastIndexOf('.'));
-            //     name = name.substring(0, name.lastIndexOf('.'));
-            // }
-            // name = name.replace(/_/g, '');
-            // this.fileName = name + ext;
-            // console.log('File name:', this.fileName);
-            // console.log('Attempting to upload file to S3:', this.fileName);
-            // let uploadSuccess = false;
-            // try {
-            //     this.fileName = this.fileName + '_' + this.selectedOperation + '_' + this.selectedObject;
-            //     console.log('Updated Name', this.fileName);
-            //     const presignedUrl = await getPresignedUrl({ fileName: this.fileName });
-            //     console.log('Presigned URL:', presignedUrl);
-            //     const uploadResponse = await fetch(presignedUrl, {
-            //         method: 'PUT',
-            //         headers: { 'Content-Type': 'text/csv' },
-            //         body: new Blob([this.csvFileContent], { type: 'text/csv' })
-            //     });
-            //     if (uploadResponse.ok) {
-            //         console.log('File sent to S3 successfully:', this.fileName);
-            //         uploadSuccess = true;
-            //     } else {
-            //         console.error('Error uploading file to S3:', uploadResponse.statusText);
-            //     }
-            // } catch (error) {
-            //     console.error('Error uploading file to S3:', error);
-            // }
-            // if (!uploadSuccess) {
-            //     this.showProgressBar = false;
-            //     return;
-            // }
-              const jsonData = this.parseCSV(this.csvFileContent); // Parse CSV to JSON
-            if (!jsonData) {
-                // Error already shown, stop processing
-                console.log('CSV parsing failed. Stopping process.');
+            let ext = '';
+            if (name.includes('.')) {
+                ext = name.substring(name.lastIndexOf('.'));
+                name = name.substring(0, name.lastIndexOf('.'));
+            }
+            name = name.replace(/_/g, '');
+            this.fileName = name + ext;
+            console.log('File name:', this.fileName);
+            console.log('Attempting to upload file to S3:', this.fileName);
+            let uploadSuccess = false;
+            try {
+                console.log('Selected Operation:', this.selectedOperation);
+                console.log('Selected Object:', this.selectedObject);
+                this.fileName = this.fileName + '_' + this.selectedOperation + '_' + this.selectedObject;
+                console.log('Updated Name', this.fileName);
+                const presignedUrl = await getPresignedUrl({ fileName: this.fileName });
+                console.log('Presigned URL:', presignedUrl);
+                const uploadResponse = await fetch(presignedUrl, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'text/csv' },
+                    body: new Blob([this.csvFileContent], { type: 'text/csv' })
+                });
+                if (uploadResponse.ok) {
+                    console.log('File sent to S3 successfully:', this.fileName);
+                    uploadSuccess = true;
+                } else {
+                    console.error('Error uploading file to S3:', uploadResponse.statusText);
+                }
+            } catch (error) {
+                console.error('Error uploading file to S3:', error);
+            }
+            if (!uploadSuccess) {
                 this.showProgressBar = false;
                 return;
             }
-            try {
-                await this.sendDataInChunks(jsonData, this.fileName); // Wait for all chunks to be sent
-                // Invoke the ProcessDataFeed batch class
-                await this.invokeBatchClass();
-            } catch (error) {
-                console.error('Error during processing:', error);
-            }
-        } else {
-            console.error('No file uploaded. Please upload a CSV file before clicking Next.');
+        //       const jsonData = this.parseCSV(this.csvFileContent); // Parse CSV to JSON
+        //     if (!jsonData) {
+        //         // Error already shown, stop processing
+        //         console.log('CSV parsing failed. Stopping process.');
+        //         this.showProgressBar = false;
+        //         return;
+        //     }
+        //     try {
+        //         await this.sendDataInChunks(jsonData, this.fileName); // Wait for all chunks to be sent
+        //         // Invoke the ProcessDataFeed batch class
+        //         await this.invokeBatchClass();
+        //     } catch (error) {
+        //         console.error('Error during processing:', error);
+        //     }
+        // } else {
+        //     console.error('No file uploaded. Please upload a CSV file before clicking Next.');
+        // }
         }
     }
  
     previousPage() {
-                this.showHeaderBlocks = false;
-                this.showImportCard = true;
-                this.showProgressBar = false;
+        this.showHeaderBlocks = false;
+        this.showImportCard = true;
+        this.showProgressBar = false;
     }
  
     goToUploadPage() {
@@ -266,6 +299,7 @@ export default class csvUploader extends LightningElement {
         this.ObjectIsSelected = false;
         this.OperationIsSelected = false;
         this.selectedUniqueKey = '';
+        this.objectSearchTerm = '';
     }
  
     async sendDataInChunks(jsonData, fileName) {

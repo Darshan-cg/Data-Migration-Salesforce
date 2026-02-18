@@ -1,7 +1,6 @@
 <template>
     <lightning-card title="CSV Data Uploader" icon-name="standard:multi_select_checkbox">
         
-        <!-- Step Indicator Header -->
         <div class="slds-p-horizontal_large slds-p-bottom_medium slds-border_bottom">
             <lightning-progress-indicator current-step={currentStep} type="path" variant="base">
                 <lightning-progress-step label="Upload & Configure" value="1"></lightning-progress-step>
@@ -10,20 +9,16 @@
             </lightning-progress-indicator>
         </div>
 
-        <!-- Main Content Area -->
         <div class="slds-p-around_large content-area">
             
-            <!-- STEP 1: UPLOAD -->
             <template if:true={showImportCard}>
                 <div class="slds-grid slds-wrap slds-gutters">
-                    <!-- Info Banner -->
                     <div class="slds-col slds-size_1-of-1 slds-m-bottom_medium">
                         <div class="slds-box slds-theme_info slds-text-longform" style="border-left: 4px solid #0070D2;">
                             <strong>Getting Started:</strong> Begin by uploading your CSV file and selecting the destination Salesforce object. This tool will guide you through mapping your data columns to Salesforce fields.
                         </div>
                     </div>
 
-                    <!-- File Upload - Full Width Focus -->
                     <div class="slds-col slds-size_1-of-1 slds-m-bottom_large">
                         <div class="custom-file-container">
                             <lightning-input 
@@ -44,20 +39,35 @@
                         </div>
                     </div>
 
-                    <!-- Dropdowns - Side by Side -->
                     <div class="slds-col slds-size_1-of-2">
                         <div class="input-card">
-                            <lightning-combobox 
-                                name="objectDropdown" 
-                                label="Target Salesforce Object" 
-                                value={selectedObject}
-                                placeholder="Select destination..." 
-                                options={objectOptions} 
-                                onchange={handleObjectChange} 
+                            <lightning-input 
+                                type="search" 
+                                label="Search Salesforce Object" 
+                                value={objectSearchTerm}
+                                onchange={handleObjectSearch}
                                 required
-                                help-text="Choose which Salesforce object will receive the imported data">
-                            </lightning-combobox>
+                                placeholder="Type to filter objects..."
+                                class="slds-m-bottom_x-small">
+                            </lightning-input>
                         </div>
+                        
+                        <template if:true={showObjectRecommendations}>
+                            <div style="position:relative;top:100%;left:0;right:0;width:100%;background:#ffffff;border:1px solid #d0d0d0;border-top:none;border-radius:0 0 8px 8px;z-index:9999;max-height:350px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.12);">
+                                <template if:true={filteredObjectOptions.length}>
+                                    <template for:each={filteredObjectOptions} for:item="option">
+                                        <div key={option.value} onclick={handleObjectRecommendationClick} data-value={option.value} data-label={option.label} class="search-option" style="padding:14px 16px;border-bottom:1px solid #f0f0f0;cursor:pointer;font-size:14px;color:#202124;transition:background-color 0.15s ease;">
+                                            {option.label}
+                                        </div>
+                                    </template>
+                                </template>
+                                <template if:false={filteredObjectOptions.length}>
+                                    <div style="padding:16px;text-align:center;color:#9aa0a6;font-size:14px;">
+                                        No matching objects found
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
                     </div>
 
                     <div class="slds-col slds-size_1-of-2">
@@ -81,17 +91,15 @@
             <template if:true={showMappingChoiceModal}>
             <section role="dialog" tabindex="-1" aria-modal="true" aria-labelledby="modal-heading-01" class="slds-modal slds-fade-in-open slds-modal_medium">
                 <div class="slds-modal__container">
-                    <!-- Header: Added a subtle background color -->
+
                     <header class="slds-modal__header custom-header">
                         <h2 id="modal-heading-01" class="modal-title">🎯 Mapping Options</h2>
                         <p class="modal-subtitle">Choose how you want to configure your data mapping</p>
                     </header>
 
-                    <!-- Content: Added a light background tint -->
                     <div class="slds-modal__content custom-content-bg slds-p-around_xx-large">
                         <div class="slds-grid slds-grid_align-center choice-grid">
                             
-                            <!-- Option 1: Create New -->
                             <div class="slds-col">
                                 <div class="visual-picker-container" onclick={handleCreateNewMapping} title="Create a new mapping configuration from scratch">
                                     <div class="custom-visual-picker">
@@ -107,7 +115,6 @@
                                 </div>
                             </div>
 
-                            <!-- Option 2: Use Existing -->
                             <div class="slds-col">
                                 <div class="visual-picker-container" onclick={handleUseExistingMapping} title="Use a previously saved mapping configuration">
                                     <div class="custom-visual-picker">
@@ -126,7 +133,6 @@
                         </div>
                     </div>
 
-                    <!-- Footer -->
                     <footer class="slds-modal__footer custom-footer">
                         <p class="footer-note">Selection is required to proceed</p>
                     </footer>
@@ -135,7 +141,6 @@
             <div class="slds-backdrop slds-backdrop_open"></div>
             </template>
 
-            <!-- STEP 2: FIELD MAPPING -->
             <template if:true={showHeaderBlocks}>
                 <div class="mapping-container slds-fade-in">
                     <c-csv-field-mapper
@@ -149,30 +154,22 @@
                 </div>
             </template>
 
-            <!-- STEP 3: PROGRESS -->
             <template if:true={showProgressBar}>
-                <div class="slds-text-align_center slds-p-vertical_xx-large">
-                    <div class="progress-info-card">
-                        <div style="margin-bottom: 24px;">
-                            <lightning-icon icon-name="standard:process" size="large" style="color: #0070D2; margin-bottom: 12px;"></lightning-icon>
-                            <h2 class="slds-text-heading_medium slds-m-bottom_small">📤 Importing Your Data</h2>
+                <div class="progress-simple-container">
+                    <div class="progress-simple-card">
+                        <div class="progress-simple-header">
+                            <!-- <lightning-icon icon-name="standard:process" size="large" class="progress-icon"></lightning-icon> -->
+                            <h2 class="progress-simple-title">Importing Your Data</h2>
                         </div>
-                        
-                        <div style="background: #F3F3F3; padding: 16px; border-radius: 4px; margin-bottom: 20px; border-left: 3px solid #0070D2;">
-                            <p style="font-size: 14px; margin: 0; line-height: 1.5;">{message}</p>
+                       
+                        <div class="progress-message-box">
+                            <p class="progress-message-text">{message}</p>
                         </div>
-                        
-                        <lightning-progress-bar value={progressValue} variant="success" size="large"></lightning-progress-bar>
-                        
-                        <p class="slds-m-top_medium slds-text-title_caps slds-text-color_weak">
-                            ✓ {processedRecords} of {totalRecords} records processed
-                        </p>
                     </div>
                 </div>
             </template>
         </div>
 
-        <!-- Footer Actions -->
         <div slot="footer" class="slds-p-top_medium">
             <template if:true={showImportCard}>
                 <template if:true={showNextButton}>

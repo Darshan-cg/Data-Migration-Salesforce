@@ -48,6 +48,16 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
         }
         public Database.QueryLocator start(Database.BatchableContext context)
         {
+            System.debug('===== ProcessDataFeed Batch START =====');
+            System.debug('File to process: ' + fileToBeProcessed);
+            System.debug('Operation type: ' + operationType);
+            System.debug('Target object: ' + targetObj);
+            
+            // Count records before querying
+            Integer recordCount = [SELECT COUNT() FROM Data_Feed_Record__c 
+                                  WHERE Is_Processed__c = false AND File_Name__c = :fileToBeProcessed];
+            System.debug('Total unprocessed records for this file: ' + recordCount);
+            
             return Database.getQueryLocator([SELECT Id, File_Name__c, Error_Message__c,Data_Feed_Record_JSON__c,Is_Failed__c,Is_Processed__c FROM Data_Feed_Record__c
             WHERE Is_Processed__c = false AND File_Name__c = :fileToBeProcessed
             Order by createddate desc
@@ -55,6 +65,16 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
         }
         public void execute(Database.BatchableContext context, List<Data_Feed_Record__c> scope)
         {
+            System.debug('ProcessDataFeed.execute() called for file: ' + fileToBeProcessed + ' with scope size: ' + scope.size());
+            
+            // If scope is empty, log and exit gracefully
+            if (scope == null || scope.isEmpty()) {
+                System.debug('WARNING: No Data_Feed_Record__c records found for file: ' + fileToBeProcessed);
+                System.debug('This may indicate Bulk API records have not yet been committed to the database.');
+                System.debug('Batch execution for file ' + fileToBeProcessed + ' has no records to process.');
+                return;
+            }
+            
             /*Map<String,List<SObject>> lookupRecordsMap=new Map<String,List<Sobject>>();
             for(String lookupQuery:lookupQueries)
             {
@@ -569,7 +589,19 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
         }
         public void finish(Database.BatchableContext context)
         {
-            Data_Feed_Job_Tracker__c jobTracker = [SELECT Id, File_Name__c, Operation_Type__c, Target_Object__c, Status__c, CreatedBy.Email FROM Data_Feed_Job_Tracker__c WHERE File_Name__c = :fileToBeProcessed order by createddate desc LIMIT 1][0];
+            System.debug('===== ProcessDataFeed Batch FINISH =====');
+            System.debug('File processed: ' + fileToBeProcessed);
+            
+            List<Data_Feed_Job_Tracker__c> jobTrackerList = [SELECT Id, File_Name__c, Operation_Type__c, Target_Object__c, Status__c, CreatedBy.Email FROM Data_Feed_Job_Tracker__c WHERE File_Name__c = :fileToBeProcessed order by createddate desc LIMIT 1];
+            
+            if (jobTrackerList.isEmpty()) {
+                System.debug('ERROR: No Data_Feed_Job_Tracker__c record found for file: ' + fileToBeProcessed);
+                return;
+            }
+            
+            Data_Feed_Job_Tracker__c jobTracker = jobTrackerList[0];
+            System.debug('Job Tracker Status: ' + jobTracker.Status__c);
+            
             if(jobTracker.Status__c == 'Upload Complete') {
                 jobTracker.Status__c = 'Completed';
                 update jobTracker;
@@ -578,6 +610,9 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
                 Integer totalRecords = [SELECT count() FROM Data_Feed_Record__c WHERE File_Name__c = :fileToBeProcessed];
                 Integer processedRecords = [SELECT count() FROM Data_Feed_Record__c WHERE File_Name__c = :fileToBeProcessed AND Is_Processed__c = true];
  
+                System.debug('Total records: ' + totalRecords);
+                System.debug('Processed records: ' + processedRecords);
+                
                 // Cannot filter on long text area fields in SOQL (Error_Message__c), so query processed records
                 // and count non-blank Error_Message__c values in Apex.
                 Integer failedRecords = 0;
@@ -586,7 +621,9 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
                         failedRecords++;
                     }
                 }
- 
+                
+                System.debug('Failed records: ' + failedRecords);
+
                 try {
                     List<String> toAddresses = new List<String>();
                     if (jobTracker.CreatedBy != null && String.isNotBlank(jobTracker.CreatedBy.Email)) {
@@ -614,7 +651,7 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
                 } catch (Exception e) {
                     System.debug('Failed to send completion email: ' + e.getMessage());
                 }
- 
+
                 //CSVUploaderController.invokeProcessDataFeedBatch(jobTracker.File_Name__c, jobTracker.Operation_Type__c, jobTracker.Target_Object__c);
             }
             // else {
