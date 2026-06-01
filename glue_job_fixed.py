@@ -75,7 +75,7 @@ s3 = boto3.client('s3')
 obj = s3.get_object(Bucket=bucket, Key=key)
 csv_content = obj['Body'].read().decode('utf-8')
 
-def create_job(instance_url, access_token, object_type='Data_Feed_Record__c'):
+def create_job(instance_url, access_token, object_type='CgInfinity__Data_Feed_Record__c'):
     url = f"{instance_url}/services/data/v65.0/jobs/ingest"
     headers = {
         "Authorization": f"Bearer {access_token}",
@@ -152,8 +152,8 @@ reader = csv.DictReader(io.StringIO(csv_content))
 records = []
 for row in reader:
     records.append({
-        "Data_Feed_Record_JSON__c": json.dumps(row, ensure_ascii=False),
-        "File_Name__c": file_name
+        "CgInfinity__Data_Feed_Record_JSON__c": json.dumps(row, ensure_ascii=False),
+        "CgInfinity__File_Name__c": file_name
     })
 df = pd.DataFrame(records)
 
@@ -168,7 +168,7 @@ for i in range(0, total_records, BULK_CHUNK_SIZE):
     chunk_df.to_csv(chunk_file, index=False)
     
     # Create job
-    job = create_job(instance_url, access_token, object_type='Data_Feed_Record__c')
+    job = create_job(instance_url, access_token, object_type='CgInfinity__Data_Feed_Record__c')
     job_id = job['id']
     job_ids.append(job_id)
     logger.info(f"Created job {job_id} for records {i+1} to {min(i+BULK_CHUNK_SIZE, total_records)}")
@@ -195,12 +195,12 @@ logger.info("Waiting 15 seconds for Salesforce to fully commit records...")
 time.sleep(15)
 
 # Create Job Tracker record
-endpoint_job_tracker = f"{instance_url}/services/data/v65.0/sobjects/Data_Feed_Job_Tracker__c/"
+endpoint_job_tracker = f"{instance_url}/services/data/v65.0/sobjects/CgInfinity__Data_Feed_Job_Tracker__c/"
 job_tracker_record = {
-    "File_Name__c": file_name,
-    "Status__c": "Upload Complete",
-    "Operation_Type__c": operation_type.capitalize(),
-    "Target_Object__c": target_object
+    "CgInfinity__File_Name__c": file_name,
+    "CgInfinity__Status__c": "Upload Complete",
+    "CgInfinity__Operation_Type__c": operation_type.capitalize(),
+    "CgInfinity__Target_Object__c": target_object
 }
 job_tracker_data = json.dumps(job_tracker_record).encode('utf-8')
 job_tracker_headers = {

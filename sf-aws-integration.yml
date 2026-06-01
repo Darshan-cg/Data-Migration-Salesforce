@@ -1,0 +1,148 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Salesforce-AWS Integration with API Gateway and Lambda'
+
+Resources:
+  # S3 Bucket for data migration
+  DataMigrationBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: s3-datamig-bucket-x38e233eyy3
+      VersioningConfiguration:
+        Status: Enabled
+
+  # IAM Role for Lambda
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: S3PresignedUrlAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:GetObject'
+                  - 's3:PutObject'
+                Resource: 'arn:aws:s3:::s3-datamig-bucket-x38e233eyy3/*'
+        - PolicyName: CloudWatchLogsPermissions
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: 'arn:aws:logs:*:*:*'
+
+  # Lambda Function for Presigned URL
+  GetPresignedUrlFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: getPreSignedUrl
+      Runtime: python3.14
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Handler: index.lambda_handler
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+
+          def lambda_handler(event, context):
+              # Parse fileName from JSON body
+              body = event.get('body')
+              if body:
+                  data = json.loads(body)
+                  key = data.get('fileName', 'uploads/myfile.csv')
+              else:
+                  key = 'uploads/myfile.csv'
+
+              bucket = 's3-datamig-bucket-x38e233eyy3'
+              expires = 300  # URL valid for 5 minutes
+
+              s3 = boto3.client('s3')
+              url = s3.generate_presigned_url(
+                  ClientMethod='put_object',
+                  Params={
+                      'Bucket': bucket,
+                      'Key': key,
+                      'ContentType': 'text/csv'
+                  },
+                  ExpiresIn=expires
+              )
+
+              return {
+                  'statusCode': 200,
+                  'body': json.dumps({'presignedUrl': url})
+              }
+
+  # REST API
+  SalesforceApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: getPresignedUrl
+
+  # Resource: /getPresignedUrl
+  GetPresignedUrlResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref SalesforceApi
+      ParentId: !GetAtt SalesforceApi.RootResourceId
+      PathPart: getPresignedUrl
+
+  # Method: POST /getPresignedUrl
+  GetPresignedUrlMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref SalesforceApi
+      ResourceId: !Ref GetPresignedUrlResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetPresignedUrlFunction.Arn}/invocations'
+
+  # Permission for API Gateway to invoke Lambda
+  GetPresignedUrlFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref GetPresignedUrlFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SalesforceApi}/*/*'
+
+  # API Deployment
+  ApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: GetPresignedUrlMethod
+    Properties:
+      RestApiId: !Ref SalesforceApi
+      StageName: prod
+
+Outputs:
+  S3BucketName:
+    Description: S3 bucket for data migration
+    Value: !Ref DataMigrationBucket
+  
+  S3BucketArn:
+    Description: S3 bucket ARN
+    Value: !GetAtt DataMigrationBucket.Arn
+
+  GetPresignedUrlEndpoint:
+    Description: POST /getPresignedUrl endpoint
+    Value: !Sub 'https://${SalesforceApi}.execute-api.${AWS::Region}.amazonaws.com/prod/getPresignedUrl'
+  
+  LambdaFunctionArn:
+    Description: Lambda function ARN
+    Value: !GetAtt GetPresignedUrlFunction.Arn
+    

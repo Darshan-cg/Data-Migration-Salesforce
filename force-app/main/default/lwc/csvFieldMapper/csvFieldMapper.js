@@ -299,6 +299,9 @@ export default class CsvFieldMapper extends LightningElement {
             this.fieldOptions = data.map(field => ({ label: field.label, value: field.apiName }));    
             // Update dropdowns for unique key section
             this.updateUniqueKeyDropdowns();
+        }).catch(error => {
+            console.error('Error loading fields for object:', this.selectedObject, error);
+            this.showToast('Error', 'Failed to load fields for ' + this.selectedObject + '. ' + (error.body ? error.body.message : error.message || ''), 'error');
         });
         // Initial update for unique key section
         this.updateUniqueKeyDropdowns();
@@ -622,7 +625,7 @@ export default class CsvFieldMapper extends LightningElement {
                 console.log('>>> ENTERING COMPOSITE BRANCH for', item.csvFieldName);
                 const parts = item.value.split(',').map(s => s.trim());
                 
-                // Collect per-part field selections for BOTH composite lookup and composite non-lookup
+                // Collect per-part field selections for BOTH composite lookup and composite non-elookup
                 const lookupValues = parts
                     .map(part => {
                         const val = item['lookupField_' + part];
@@ -684,7 +687,7 @@ export default class CsvFieldMapper extends LightningElement {
             this.configuration.mapping = this.configuration.mapping.map(mapping => {
                 const orig = this.selectedDropdownValues.find(m => m.csvFieldName === mapping.csvFieldName && m.selectedField === mapping.selectedField);
                 const isUniqueKey = this.createdUniqueKeyColumns.includes(orig ? orig.keyField : mapping.csvFieldName);
-                return { ...mapping, IsUniqueKey: isUniqueKey, lookupObject: mapping.lookupObject };
+                return { ...mapping, isUniqueKey: isUniqueKey, lookupObject: mapping.lookupObject };
             });
         } else {
             this.configuration.mapping = this.configuration.mapping.map(mapping => {
@@ -698,14 +701,20 @@ export default class CsvFieldMapper extends LightningElement {
         this.configuration.fileName = this.fileName;
         console.log('Creating mapping with configuration:', JSON.stringify(this.configuration));
         createConfiguration({
-            wrapper: this.configuration
+            wrapperJson: JSON.stringify(this.configuration)
         })
             .then(() => {
                 this.showToast('Success', 'CSV mapping created successfully!', 'success');
             })
             .catch(error => {
                 console.error('Error creating mapping:', error);
-                this.showToast('Error', 'Failed to create CSV mapping.', 'error');
+                let errorMessage = 'Failed to create CSV mapping.';
+                if (error && error.body && error.body.message) {
+                    errorMessage = error.body.message;
+                } else if (error && error.message) {
+                    errorMessage = error.message;
+                }
+                this.showToast('Error', errorMessage, 'error');
             });
     }
    
@@ -895,23 +904,71 @@ export default class CsvFieldMapper extends LightningElement {
         }
     }
 
-          handleDeleteColumnMapping(event) {
-            // Get the column value (keyField) from the button's data attribute
+       handleDeleteColumnMapping(event) {
             const keyField = event.currentTarget.dataset.columnvalue;
-            // Remove from selectedDropdownValues (main mapping array)
-            this.selectedDropdownValues = this.selectedDropdownValues.filter(
-                mapping => mapping.keyField !== keyField
-            );
-            // Remove from csvHeaderOptions (for non-composite columns)
-            this.csvHeaderOptions = this.csvHeaderOptions.filter(
-                col => col.value !== keyField
-            );
-            // Remove from compositeHeaderOptions (for composite columns)
-            // this.compositeHeaderOptions = this.compositeHeaderOptions.filter(
-            //     col => col.value !== keyField
-            // );
-            // Show toast for feedback
-            this.showToast('Deleted', 'Column mapping removed.', 'success');
+           
+            // Check if this is a composite mapping by looking for the __COMPOSITE_ pattern
+            const isComposite = keyField && keyField.includes('__COMPOSITE_');
+           
+            if (isComposite) {
+                // Extract the mapping ID from the keyField (format: compositeKey__COMPOSITE_id)
+                const parts = keyField.split('__COMPOSITE_');
+                const mappingId = parseInt(parts[1], 10);
+               
+                // Find the composite mapping
+                const mapping = this.createdCompositeMappings.find(m => m.id === mappingId);
+               
+                if (mapping) {
+                    const sectionId = mapping.sectionId;
+                    const compositeKey = mapping.compositeKey;
+                   
+                    // Remove from selectedDropdownValues
+                    this.selectedDropdownValues = this.selectedDropdownValues.filter(
+                        row => row.keyField !== keyField
+                    );
+                   
+                    // Remove from compositeHeaderOptions
+                    this.compositeHeaderOptions = this.compositeHeaderOptions.filter(
+                        opt => opt.value !== keyField
+                    );
+                   
+                    // Remove from csvHeaders
+                    this.csvHeaders = this.csvHeaders.filter(h => h !== compositeKey);
+                   
+                    // Remove from createdCompositeMappings
+                    this.createdCompositeMappings = this.createdCompositeMappings.filter(
+                        m => m.id !== mappingId
+                    );
+                   
+                    // Reset the section state so it can be used again
+                    const sectionIdx = this.compositeSections.findIndex(sec => sec.id === sectionId);
+                    if (sectionIdx !== -1) {
+                        let section = this.compositeSections[sectionIdx];
+                        section.isMapped = false;
+                        section.isButtonDisabled = false;
+                        this.compositeSections = [
+                            ...this.compositeSections.slice(0, sectionIdx),
+                            { ...section },
+                            ...this.compositeSections.slice(sectionIdx + 1)
+                        ];
+                    }
+                   
+                    this.showToast('Delete', 'Composite mapping removed.', 'success');
+                }
+            } else {
+                // Handle regular (non-composite) column mapping deletion
+                // Remove from selectedDropdownValues (main mapping array)
+                this.selectedDropdownValues = this.selectedDropdownValues.filter(
+                    mapping => mapping.keyField !== keyField
+                );
+               
+                // Remove from csvHeaderOptions (for non-composite columns)
+                this.csvHeaderOptions = this.csvHeaderOptions.filter(
+                    col => col.value !== keyField
+                );
+               
+                this.showToast('Deletesss', 'Column mapping removed.', 'success');
+            }
         }
  
     handleDeleteCompositeMapping(event) {
@@ -939,14 +996,11 @@ export default class CsvFieldMapper extends LightningElement {
         this.createdCompositeMappings = this.createdCompositeMappings.filter(
             mapping => mapping.id !== mappingId
         );
-         this.compositeSections = this.compositeSections.filter(sec => sec.id !== sectionId);
-          this.compositeSections = this.compositeSections.map((sec, idx) => ({ ...sec, id: idx }));
+        this.compositeSections = this.compositeSections.filter(sec => sec.id !== mappingId);
+        this.compositeSections = this.compositeSections.map((sec, idx) => ({ ...sec, id: idx }));
         console.log('Mapping deleted, remaining:', this.createdCompositeMappings);
         console.log('Updated csvHeaders:', this.csvHeaders);
     }
-
-    
-
  
     get hasCompositeMappings() {
         return this.createdCompositeMappings && this.createdCompositeMappings.length > 0;

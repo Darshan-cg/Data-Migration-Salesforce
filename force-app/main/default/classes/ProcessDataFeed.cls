@@ -6,7 +6,7 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
         Map<String,String> fieldColumnMapping=new Map<String,String>();
         Map<String,String> lookupColumnMapping=new Map<String,String>();
         List<String> lookupQueries=new List<String>();
-        List<Data_Feed_Mapping__c> lookupMappings=new List<Data_Feed_Mapping__c>();
+        List<CgInfinity__Data_Feed_Mapping__c> lookupMappings=new List<CgInfinity__Data_Feed_Mapping__c>();
         //Map<String,String> lookupFieldColumnMapping=new Map<String,String>();
         //Map<String,String> lookupFieldQueryMapping=new Map<String,String>();
  
@@ -16,30 +16,30 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
             fileToBeProcessed = fileName;
             operationType = operation;
             targetObj=targetObject;
-            List<Data_Feed_Mapping__c> mappings = [SELECT File_Name__c, File_Column_Name__c, SObject_API_Name__c, Field_to_update__c, Lookup_Filter_Criteria__c,
-                                                  Lookup_Object_Name__c, Lookup_Field__c, Lookup_Return_Field__c, Operation__c, Id, Name
-                                                  FROM Data_Feed_Mapping__c WHERE File_Name__c = :fileName and Operation__c=:operation and SObject_API_Name__c=:targetObject and is_lookup__c=false];
+            List<CgInfinity__Data_Feed_Mapping__c> mappings = [SELECT CgInfinity__File_Name__c, CgInfinity__File_Column_Name__c, CgInfinity__SObject_API_Name__c, CgInfinity__Field_to_update__c, CgInfinity__Lookup_Filter_Criteria__c,
+                                                  CgInfinity__Lookup_Object_Name__c, CgInfinity__Lookup_Field__c, CgInfinity__Lookup_Return_Field__c, CgInfinity__Operation__c, Id, Name
+                                                  FROM CgInfinity__Data_Feed_Mapping__c WHERE CgInfinity__File_Name__c = :fileName and CgInfinity__Operation__c=:operation and CgInfinity__SObject_API_Name__c=:targetObject and CgInfinity__is_lookup__c=false];
             System.debug(mappings);
-            lookupMappings = [SELECT File_Name__c, File_Column_Name__c, SObject_API_Name__c, Field_to_update__c, Lookup_Filter_Criteria__c,
-                                                  Lookup_Object_Name__c, Lookup_Field__c, Lookup_Return_Field__c, Operation__c, Id, Name
-                                                  FROM Data_Feed_Mapping__c WHERE File_Name__c = :fileName and Operation__c=:operation and SObject_API_Name__c=:targetObject and is_lookup__c=true];
+            lookupMappings = [SELECT CgInfinity__File_Name__c, CgInfinity__File_Column_Name__c, CgInfinity__SObject_API_Name__c, CgInfinity__Field_to_update__c, CgInfinity__Lookup_Filter_Criteria__c,
+                                                  CgInfinity__Lookup_Object_Name__c, CgInfinity__Lookup_Field__c, CgInfinity__Lookup_Return_Field__c, CgInfinity__Operation__c, Id, Name
+                                                  FROM CgInfinity__Data_Feed_Mapping__c WHERE CgInfinity__File_Name__c = :fileName and CgInfinity__Operation__c=:operation and CgInfinity__SObject_API_Name__c=:targetObject and CgInfinity__is_lookup__c=true];
            
             System.debug(lookupMappings);
             system.debug(targetObj);
-            for(Data_Feed_Mapping__c mapping:mappings)
+            for(CgInfinity__Data_Feed_Mapping__c mapping:mappings)
             {
-                fieldColumnMapping.put(mapping.File_Column_Name__c,mapping.Field_to_update__c);
+                fieldColumnMapping.put(mapping.CgInfinity__File_Column_Name__c,mapping.CgInfinity__Field_to_update__c);
             }
-            for(Data_Feed_Mapping__c mapping:lookupMappings)
+            for(CgInfinity__Data_Feed_Mapping__c mapping:lookupMappings)
             {
-                lookupColumnMapping.put(mapping.File_Column_Name__c,mapping.Field_to_update__c);
+                lookupColumnMapping.put(mapping.CgInfinity__File_Column_Name__c,mapping.CgInfinity__Field_to_update__c);
             }            
-            /*for(Data_Feed_Mapping__c mapping:lookupMappings)
+            /*for(CgInfinity__Data_Feed_Mapping__c mapping:lookupMappings)
             {
-                String lookupQuery = 'SELECT ' + mapping.Lookup_Return_Field__c + ' FROM ' + mapping.Lookup_Object_Name__c +
-                                    ' WHERE ' + mapping.Lookup_Field__c + ' IN: \'' +mapping.File_Column_Name__c + '\'';
-                                if (mapping.Lookup_Filter_Criteria__c != null && mapping.Lookup_Filter_Criteria__c != '') {
-                                    lookupQuery += ' AND ' + mapping.Lookup_Filter_Criteria__c;
+                String lookupQuery = 'SELECT ' + mapping.CgInfinity__Lookup_Return_Field__c + ' FROM ' + mapping.CgInfinity__Lookup_Object_Name__c +
+                                    ' WHERE ' + mapping.CgInfinity__Lookup_Field__c + ' IN: \'' +mapping.CgInfinity__File_Column_Name__c + '\'';
+                                if (mapping.CgInfinity__Lookup_Filter_Criteria__c != null && mapping.CgInfinity__Lookup_Filter_Criteria__c != '') {
+                                    lookupQuery += ' AND ' + mapping.CgInfinity__Lookup_Filter_Criteria__c;
                                 }
                 lookupQueries.add(lookupQuery);
                 //lookupFieldColumnMapping.put(mapping.File_column_Name__c,mapping.Field_to_update__c);
@@ -48,33 +48,13 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
         }
         public Database.QueryLocator start(Database.BatchableContext context)
         {
-            System.debug('===== ProcessDataFeed Batch START =====');
-            System.debug('File to process: ' + fileToBeProcessed);
-            System.debug('Operation type: ' + operationType);
-            System.debug('Target object: ' + targetObj);
-            
-            // Count records before querying
-            Integer recordCount = [SELECT COUNT() FROM Data_Feed_Record__c 
-                                  WHERE Is_Processed__c = false AND File_Name__c = :fileToBeProcessed];
-            System.debug('Total unprocessed records for this file: ' + recordCount);
-            
-            return Database.getQueryLocator([SELECT Id, File_Name__c, Error_Message__c,Data_Feed_Record_JSON__c,Is_Failed__c,Is_Processed__c FROM Data_Feed_Record__c
-            WHERE Is_Processed__c = false AND File_Name__c = :fileToBeProcessed
+            return Database.getQueryLocator([SELECT Id, CgInfinity__File_Name__c, CgInfinity__Error_Message__c,CgInfinity__Data_Feed_Record_JSON__c,CgInfinity__Is_Failed__c,CgInfinity__Is_Processed__c FROM CgInfinity__Data_Feed_Record__c
+            WHERE CgInfinity__Is_Processed__c = false AND CgInfinity__File_Name__c = :fileToBeProcessed
             Order by createddate desc
             ]);
         }
-        public void execute(Database.BatchableContext context, List<Data_Feed_Record__c> scope)
+        public void execute(Database.BatchableContext context, List<CgInfinity__Data_Feed_Record__c> scope)
         {
-            System.debug('ProcessDataFeed.execute() called for file: ' + fileToBeProcessed + ' with scope size: ' + scope.size());
-            
-            // If scope is empty, log and exit gracefully
-            if (scope == null || scope.isEmpty()) {
-                System.debug('WARNING: No Data_Feed_Record__c records found for file: ' + fileToBeProcessed);
-                System.debug('This may indicate Bulk API records have not yet been committed to the database.');
-                System.debug('Batch execution for file ' + fileToBeProcessed + ' has no records to process.');
-                return;
-            }
-            
             /*Map<String,List<SObject>> lookupRecordsMap=new Map<String,List<Sobject>>();
             for(String lookupQuery:lookupQueries)
             {
@@ -89,37 +69,37 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
             Map<String,Set<Object>> lookupRecordsMap= new Map<String,Set<Object>>();
  
             // Only run this block for Upsert or Update operations
-            List<Data_Feed_Mapping__c> uniqueKeyMappings = new List<Data_Feed_Mapping__c>();
+            List<CgInfinity__Data_Feed_Mapping__c> uniqueKeyMappings = new List<CgInfinity__Data_Feed_Mapping__c>();
             List<String> targetCsvCols = new List<String>();
             List<String> targetSfFields = new List<String>();
             if (operationType == 'Update') {
-                uniqueKeyMappings = [SELECT File_Column_Name__c, Field_to_update__c, is_lookup__c, Lookup_Field__c FROM Data_Feed_Mapping__c WHERE File_Name__c = :fileToBeProcessed AND Operation__c = :operationType AND SObject_API_Name__c = :targetObj  AND Field_to_update__c = 'Id'];
-                for (Data_Feed_Mapping__c m : uniqueKeyMappings) {
+                uniqueKeyMappings = [SELECT CgInfinity__File_Column_Name__c, CgInfinity__Field_to_update__c, CgInfinity__Is_Lookup__c, CgInfinity__Lookup_Field__c FROM CgInfinity__Data_Feed_Mapping__c WHERE CgInfinity__File_Name__c = :fileToBeProcessed AND CgInfinity__Operation__c = :operationType AND CgInfinity__SObject_API_Name__c = :targetObj  AND CgInfinity__Field_to_update__c = 'Id'];
+                for (CgInfinity__Data_Feed_Mapping__c m : uniqueKeyMappings) {
                     System.debug(m);
-                    if (m.is_lookup__c && m.Lookup_Field__c != null && m.Lookup_Field__c.contains(',')) {
+                    if (m.CgInfinity__Is_Lookup__c && m.CgInfinity__Lookup_Field__c != null && m.CgInfinity__Lookup_Field__c.contains(',')) {
                         continue;
                     }
-                    targetCsvCols.add(m.File_Column_Name__c);
-                    if (m.is_lookup__c == true && String.valueOf(m.Field_to_update__c).toLowerCase() == 'id') {
-                        targetSfFields.add(m.Lookup_Field__c);
+                    targetCsvCols.add(m.CgInfinity__File_Column_Name__c);
+                    if (m.CgInfinity__Is_Lookup__c == true && String.valueOf(m.CgInfinity__Field_to_update__c).toLowerCase() == 'id') {
+                        targetSfFields.add(m.CgInfinity__Lookup_Field__c);
                     } else {
-                        targetSfFields.add(m.Field_to_update__c);
+                        targetSfFields.add(m.CgInfinity__Field_to_update__c);
                     }
                 }
             }
             else if(operationType == 'Upsert') {
-                uniqueKeyMappings = [SELECT File_Column_Name__c, Field_to_update__c FROM Data_Feed_Mapping__c WHERE File_Name__c = :fileToBeProcessed AND Operation__c = :operationType AND SObject_API_Name__c = :targetObj AND Is_Unique_Key__c = true];
-                for (Data_Feed_Mapping__c m : uniqueKeyMappings) {
-                    targetCsvCols.add(m.File_Column_Name__c);
-                    targetSfFields.add(m.Field_to_update__c);
+                uniqueKeyMappings = [SELECT CgInfinity__File_Column_Name__c, CgInfinity__Field_to_update__c FROM CgInfinity__Data_Feed_Mapping__c WHERE CgInfinity__File_Name__c = :fileToBeProcessed AND CgInfinity__Operation__c = :operationType AND CgInfinity__SObject_API_Name__c = :targetObj AND CgInfinity__Is_Unique_Key__c = true];
+                for (CgInfinity__Data_Feed_Mapping__c m : uniqueKeyMappings) {
+                    targetCsvCols.add(m.CgInfinity__File_Column_Name__c);
+                    targetSfFields.add(m.CgInfinity__Field_to_update__c);
                 }
                 system.debug('targetCsvCols'+targetCsvCols);
                 system.debug('targetSfFields'+targetSfFields);
             }
  
             // Deserialize records
-            for (Data_Feed_Record__c d:scope) {
-                Map<String,Object> dataFeedRecord=(Map<String,Object>)JSON.deserializeuntyped(d.Data_Feed_Record_JSON__c);
+            for (CgInfinity__Data_Feed_Record__c d:scope) {
+                Map<String,Object> dataFeedRecord=(Map<String,Object>)JSON.deserializeuntyped(d.CgInfinity__Data_Feed_Record_JSON__c);
                 dataFeedRecords.add(dataFeedRecord);
             }
  
@@ -173,11 +153,11 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
             // ...existinuniqueKeyMappingsg code for lookupRecordsMap...
             for(Map<String,Object> mp: dataFeedRecords)
             {
-                for(Data_Feed_Mapping__c dfm:lookupMappings)
+                for(CgInfinity__Data_Feed_Mapping__c dfm:lookupMappings)
                 {
-                    if((dfm.file_column_name__c).contains(','))
+                    if((dfm.CgInfinity__file_column_name__c).contains(','))
                     {
-                        List<String> multipleLookups=(dfm.file_column_name__c).split(',');
+                        List<String> multipleLookups=(dfm.CgInfinity__file_column_name__c).split(',');
                         for(String s:multipleLookups)
                         {
                             if(mp.get(s)!=null)
@@ -200,20 +180,20 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
                     }
                     else
                     {
-                        if(mp.get(dfm.file_column_name__c)!=null)
+                        if(mp.get(dfm.CgInfinity__file_column_name__c)!=null)
                         {  
                             System.debug('lookupRecordsMap'+lookupRecordsMap);
-                            if(!(lookupRecordsMap.containsKey(dfm.file_column_name__c)) || (lookupRecordsMap.get(dfm.file_column_name__c)).isEmpty())
+                            if(!(lookupRecordsMap.containsKey(dfm.CgInfinity__file_column_name__c)) || (lookupRecordsMap.get(dfm.CgInfinity__file_column_name__c)).isEmpty())
                             {
                                 Set<Object> lookupValues=new Set<Object>();
-                                lookupValues.add('\''+mp.get(dfm.file_column_name__c)+'\'');
-                                lookupRecordsMap.put(dfm.file_column_name__c,lookupValues);
+                                lookupValues.add('\''+mp.get(dfm.CgInfinity__file_column_name__c)+'\'');
+                                lookupRecordsMap.put(dfm.CgInfinity__file_column_name__c,lookupValues);
                             }
-                            else if(!(lookupRecordsMap.get(dfm.file_column_name__c)).isEmpty())
+                            else if(!(lookupRecordsMap.get(dfm.CgInfinity__file_column_name__c)).isEmpty())
                             {
-                                Set<Object> lookupValues=lookupRecordsMap.get(dfm.file_column_name__c);
-                                lookupValues.add('\''+mp.get(dfm.file_column_name__c)+'\'');
-                                lookupRecordsMap.put(dfm.file_column_name__c,lookupValues);
+                                Set<Object> lookupValues=lookupRecordsMap.get(dfm.CgInfinity__file_column_name__c);
+                                lookupValues.add('\''+mp.get(dfm.CgInfinity__file_column_name__c)+'\'');
+                                lookupRecordsMap.put(dfm.CgInfinity__file_column_name__c,lookupValues);
                             }
                         }                        
                     }
@@ -222,14 +202,14 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
  
  
             Map<String,Map<String,String>> lookupResultsMap=new Map<String,Map<String,String>>();          
-            for(Data_Feed_Mapping__c mapping:lookupMappings)
+            for(CgInfinity__Data_Feed_Mapping__c mapping:lookupMappings)
             {
                 String lookupQuery;
-                if((mapping.file_column_name__c).contains(','))
+                if((mapping.CgInfinity__file_column_name__c).contains(','))
                 {
-                    List<String> multipleLookups=(mapping.file_column_name__c).split(',');
-                    List<String> multipleLookupFields=(mapping.Lookup_field__c).split(',');
-                    lookupQuery = 'SELECT ' + mapping.Lookup_Field__c+','+mapping.Lookup_Return_Field__c + ' FROM ' + mapping.Lookup_Object_Name__c +
+                    List<String> multipleLookups=(mapping.CgInfinity__file_column_name__c).split(',');
+                    List<String> multipleLookupFields=(mapping.CgInfinity__Lookup_field__c).split(',');
+                    lookupQuery = 'SELECT ' + mapping.CgInfinity__Lookup_Field__c+','+mapping.CgInfinity__Lookup_Return_Field__c + ' FROM ' + mapping.CgInfinity__Lookup_Object_Name__c +
                         ' WHERE ';
                
                     for(integer k = 0; k < multipleLookups.size(); k++)
@@ -262,14 +242,14 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
                             lookupQuery += multipleLookupFields[k] + ' IN (' + inClause + ')';                                                    
                         }
                     }
-                    if (mapping.Lookup_Filter_Criteria__c != null && mapping.Lookup_Filter_Criteria__c != '')
+                    if (mapping.CgInfinity__Lookup_Filter_Criteria__c != null && mapping.CgInfinity__Lookup_Filter_Criteria__c != '')
                     {
-                        lookupQuery += ' AND ' + mapping.Lookup_Filter_Criteria__c;
+                        lookupQuery += ' AND ' + mapping.CgInfinity__Lookup_Filter_Criteria__c;
                     }                        
                 }
                 else
                 {
-                    Set<Object> tempObject=lookupRecordsMap.get(mapping.file_column_name__c);
+                    Set<Object> tempObject=lookupRecordsMap.get(mapping.CgInfinity__file_column_name__c);
                     List<String> tempList = new List<String>();
                     for(Object o:tempObject)
                     {
@@ -284,10 +264,10 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
                         }
                         inClause=inClause.replace('\\', '');
                     }
-                    lookupQuery = 'SELECT ' + mapping.Lookup_Field__c+','+mapping.Lookup_Return_Field__c + ' FROM ' + mapping.Lookup_Object_Name__c +
-                        ' WHERE ' + mapping.Lookup_Field__c + ' IN (' + inClause + ')';
-                    if (mapping.Lookup_Filter_Criteria__c != null && mapping.Lookup_Filter_Criteria__c != '') {
-                        lookupQuery += ' AND ' + mapping.Lookup_Filter_Criteria__c;
+                    lookupQuery = 'SELECT ' + mapping.CgInfinity__Lookup_Field__c+','+mapping.CgInfinity__Lookup_Return_Field__c + ' FROM ' + mapping.CgInfinity__Lookup_Object_Name__c +
+                        ' WHERE ' + mapping.CgInfinity__Lookup_Field__c + ' IN (' + inClause + ')';
+                    if (mapping.CgInfinity__Lookup_Filter_Criteria__c != null && mapping.CgInfinity__Lookup_Filter_Criteria__c != '') {
+                        lookupQuery += ' AND ' + mapping.CgInfinity__Lookup_Filter_Criteria__c;
                     }
                     System.debug('lookupQuery'+lookupQuery);
                 }
@@ -296,10 +276,10 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
                 List<SObject> lookupRecords = Database.query(lookupQuery);                    
                 for(Sobject s:lookupRecords)
                 {
-                    if((mapping.file_column_name__c).contains(','))
+                    if((mapping.CgInfinity__file_column_name__c).contains(','))
                     {
-                        List<String> fileColumns=(mapping.file_column_name__c).split(',');
-                        List<String> fields = (mapping.Lookup_Field__c).split(',');
+                        List<String> fileColumns=(mapping.CgInfinity__file_column_name__c).split(',');
+                        List<String> fields = (mapping.CgInfinity__Lookup_Field__c).split(',');
                         String tempFileColumnName='';
                         String tempValues='';
                         for(Integer i=0;i<fileColumns.size();i++)
@@ -317,31 +297,31 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
                         if(lookupResultsMap.get(String.valueOf(tempFileColumnName))==null)
                         {
                             Map<String,String> tempMap=new Map<String,String>();
-                            tempMap.put(tempValues,(String)s.get(mapping.Lookup_Return_Field__c));
+                            tempMap.put(tempValues,(String)s.get(mapping.CgInfinity__Lookup_Return_Field__c));
                             lookupResultsMap.put(tempFileColumnName,tempMap);                  
                         }
                         else if(lookupResultsMap.get(tempFileColumnName)!=null)
                         {
                             Map<String,String> tempMap=new Map<String,String>();    
                             tempMap=lookupResultsMap.get(tempFileColumnName);
-                            tempMap.put(tempValues,(String)s.get(mapping.Lookup_Return_Field__c));
+                            tempMap.put(tempValues,(String)s.get(mapping.CgInfinity__Lookup_Return_Field__c));
                             lookupResultsMap.put(tempFileColumnName,tempMap);
                         }                        
                     }
                     else
                     {
-                        if(lookupResultsMap.get(String.valueOf(mapping.file_column_name__c))==null)
+                        if(lookupResultsMap.get(String.valueOf(mapping.CgInfinity__file_column_name__c))==null)
                         {
                             Map<String,String> tempMap=new Map<String,String>();
-                            tempMap.put((String)s.get(mapping.Lookup_Field__c),(String)s.get(mapping.Lookup_Return_Field__c));
-                            lookupResultsMap.put(String.valueOf(mapping.file_column_name__c),tempMap);                  
+                            tempMap.put((String)s.get(mapping.CgInfinity__Lookup_Field__c),(String)s.get(mapping.CgInfinity__Lookup_Return_Field__c));
+                            lookupResultsMap.put(String.valueOf(mapping.CgInfinity__File_Column_Name__c),tempMap);                  
                         }
-                        else if(lookupResultsMap.get(mapping.file_column_name__c)!=null)
+                        else if(lookupResultsMap.get(mapping.CgInfinity__File_Column_Name__c)!=null)
                         {
                             Map<String,String> tempMap=new Map<String,String>();    
-                            tempMap=lookupResultsMap.get(mapping.file_column_name__c);
-                            tempMap.put((String)s.get(mapping.Lookup_Field__c),(String)s.get(mapping.Lookup_Return_Field__c));
-                            lookupResultsMap.put(String.valueOf(mapping.file_column_name__c),tempMap);
+                            tempMap=lookupResultsMap.get(mapping.CgInfinity__File_Column_Name__c);
+                            tempMap.put((String)s.get(mapping.CgInfinity__Lookup_Field__c),(String)s.get(mapping.CgInfinity__Lookup_Return_Field__c));
+                            lookupResultsMap.put(String.valueOf(mapping.CgInfinity__File_Column_Name__c),tempMap);
                         }
                     }
                 }
@@ -349,10 +329,10 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
  
  
             for (Integer idx = 0; idx < scope.size(); idx++) {
-                Data_Feed_Record__c d = scope[idx];
+                CgInfinity__Data_Feed_Record__c d = scope[idx];
                 try {
                     System.debug('lookupResultsMap'+lookupResultsMap);
-                    Map<String,Object> dataFeedRecord=(Map<String,Object>)JSON.deserializeuntyped(d.Data_Feed_Record_JSON__c);
+                    Map<String,Object> dataFeedRecord=(Map<String,Object>)JSON.deserializeuntyped(d.CgInfinity__Data_Feed_Record_JSON__c);
                     SObject targetRecord = Schema.getGlobalDescribe().get(targetObj).newSObject();
  
                     // If update, assign Id by composite key
@@ -368,7 +348,7 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
                         system.debug('targetRecord'+targetRecord);
                         // For Upsert: do NOT throw, just don't set Id (will be insert)
                     }
-                    
+                   
                     // Prepare field describe map for type conversion
                     Schema.SObjectType objType = Schema.getGlobalDescribe().get(targetObj);
                     Map<String, Schema.SObjectField> fieldMap = objType.getDescribe().fields.getMap();
@@ -463,9 +443,9 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
                     //         }
                     //     }
                     // }
-                    for(Data_Feed_Mapping__c mapConfig : lookupMappings)
+                    for(CgInfinity__Data_Feed_Mapping__c mapConfig : lookupMappings)
                     {
-                        String csvKey = mapConfig.File_Column_Name__c;
+                        String csvKey = mapConfig.CgInfinity__File_Column_Name__c;
                    
                             // Reconstruct key from current CSV Row Data
                             List<String> cols = csvKey.split(',');
@@ -481,8 +461,8 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
                             if(!missingData) {
                                 Map<String,String> resMap = lookupResultsMap.get(csvKey);
                                 if(resMap != null && resMap.containsKey(csvCompositeValue)) {
-                                 // This sets the value. If Field_to_update__c is 'Id', it sets the ID for Update.
-                                    targetRecord.put(mapConfig.Field_to_update__c, resMap.get(csvCompositeValue));
+                                 // This sets the value. If CgInfinity__Field_to_update__c is 'Id', it sets the ID for Update.
+                                    targetRecord.put(mapConfig.CgInfinity__Field_to_update__c, resMap.get(csvCompositeValue));
                                 }
                             }
                         }
@@ -493,8 +473,8 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
                     }
                     records.add(targetRecord);
                 } catch(Exception e) {
-                    d.Is_Processed__c = true;  
-                    d.Error_Message__c = (operationType == 'Update' ? 'Error preparing record for update: ' : 'Error preparing record for insert: ') + e.getMessage() + ' at line ' + e.getLineNumber();
+                    d.CgInfinity__Is_Processed__c = true;  
+                    d.CgInfinity__Error_Message__c = (operationType == 'Update' ? 'Error preparing record for update: ' : 'Error preparing record for insert: ') + e.getMessage() + ' at line ' + e.getLineNumber();
                     records.add(null);
                 }
             }
@@ -575,55 +555,38 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
                 }
             }
  
-            // Now, update the original Data_Feed_Record__c records with status and any errors
-            for (Data_Feed_Record__c dfr : scope) {
-                dfr.Is_Processed__c = true; // Mark as processed regardless of outcome
+            // Now, update the original CgInfinity__Data_Feed_Record__c records with status and any errors
+            for (CgInfinity__Data_Feed_Record__c dfr : scope) {
+                dfr.CgInfinity__Is_Processed__c = true; // Mark as processed regardless of outcome
                 if (errorMap.containsKey(dfr.Id)) {
-                    dfr.Error_Message__c = errorMap.get(dfr.Id);
-                    dfr.Is_Failed__c = true;
-                } else if (dfr.Error_Message__c == null) {
-                    dfr.Error_Message__c = null;
+                    dfr.CgInfinity__Error_Message__c = errorMap.get(dfr.Id);
+                    dfr.CgInfinity__Is_Failed__c = true;
+                } else if (dfr.CgInfinity__Error_Message__c == null) {
+                    dfr.CgInfinity__Error_Message__c = null;
                 }
             }
             update scope;
         }
         public void finish(Database.BatchableContext context)
         {
-            System.debug('===== ProcessDataFeed Batch FINISH =====');
-            System.debug('File processed: ' + fileToBeProcessed);
-            
-            List<Data_Feed_Job_Tracker__c> jobTrackerList = [SELECT Id, File_Name__c, Operation_Type__c, Target_Object__c, Status__c, CreatedBy.Email FROM Data_Feed_Job_Tracker__c WHERE File_Name__c = :fileToBeProcessed order by createddate desc LIMIT 1];
-            
-            if (jobTrackerList.isEmpty()) {
-                System.debug('ERROR: No Data_Feed_Job_Tracker__c record found for file: ' + fileToBeProcessed);
-                return;
-            }
-            
-            Data_Feed_Job_Tracker__c jobTracker = jobTrackerList[0];
-            System.debug('Job Tracker Status: ' + jobTracker.Status__c);
-            
-            if(jobTracker.Status__c == 'Upload Complete') {
-                jobTracker.Status__c = 'Completed';
+            CgInfinity__Data_Feed_Job_Tracker__c jobTracker = [SELECT Id, CgInfinity__File_Name__c, CgInfinity__Operation_Type__c, CgInfinity__Target_Object__c, CgInfinity__Status__c, CreatedBy.Email FROM CgInfinity__Data_Feed_Job_Tracker__c WHERE CgInfinity__File_Name__c = :fileToBeProcessed order by createddate desc LIMIT 1][0];
+            if(jobTracker.CgInfinity__Status__c == 'Upload Complete') {
+                jobTracker.CgInfinity__Status__c = 'Completed';
                 update jobTracker;
  
                 // Prepare counts for the email
-                Integer totalRecords = [SELECT count() FROM Data_Feed_Record__c WHERE File_Name__c = :fileToBeProcessed];
-                Integer processedRecords = [SELECT count() FROM Data_Feed_Record__c WHERE File_Name__c = :fileToBeProcessed AND Is_Processed__c = true];
+                Integer totalRecords = [SELECT count() FROM CgInfinity__Data_Feed_Record__c WHERE CgInfinity__File_Name__c = :fileToBeProcessed];
+                Integer processedRecords = [SELECT count() FROM CgInfinity__Data_Feed_Record__c WHERE CgInfinity__File_Name__c = :fileToBeProcessed AND CgInfinity__Is_Processed__c = true];
  
-                System.debug('Total records: ' + totalRecords);
-                System.debug('Processed records: ' + processedRecords);
-                
                 // Cannot filter on long text area fields in SOQL (Error_Message__c), so query processed records
                 // and count non-blank Error_Message__c values in Apex.
                 Integer failedRecords = 0;
-                for (Data_Feed_Record__c rec : [SELECT Error_Message__c FROM Data_Feed_Record__c WHERE File_Name__c = :fileToBeProcessed AND Is_Processed__c = true]) {
-                    if (rec.Error_Message__c != null && rec.Error_Message__c.trim().length() > 0) {
+                for (CgInfinity__Data_Feed_Record__c rec : [SELECT CgInfinity__Error_Message__c FROM CgInfinity__Data_Feed_Record__c WHERE CgInfinity__File_Name__c = :fileToBeProcessed AND CgInfinity__Is_Processed__c = true]) {
+                    if (rec.CgInfinity__Error_Message__c != null && rec.CgInfinity__Error_Message__c.trim().length() > 0) {
                         failedRecords++;
                     }
                 }
-                
-                System.debug('Failed records: ' + failedRecords);
-
+ 
                 try {
                     List<String> toAddresses = new List<String>();
                     if (jobTracker.CreatedBy != null && String.isNotBlank(jobTracker.CreatedBy.Email)) {
@@ -634,10 +597,10 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
                     if (!toAddresses.isEmpty()) {
                         Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
                         mail.setToAddresses(toAddresses);
-                        String subject = 'Data Feed Processing Completed: ' + jobTracker.File_Name__c;
-                        String body = 'Dear Team,\n\nThe data feed file "' + jobTracker.File_Name__c + '" has finished processing.\n\n' +
-                                      'Operation: ' + jobTracker.Operation_Type__c + '\n' +
-                                      'Target Object: ' + jobTracker.Target_Object__c + '\n' +
+                        String subject = 'Data Feed Processing Completed: ' + jobTracker.CgInfinity__File_Name__c;
+                        String body = 'Dear Team,\n\nThe data feed file "' + jobTracker.CgInfinity__File_Name__c + '" has finished processing.\n\n' +
+                                      'Operation: ' + jobTracker.CgInfinity__Operation_Type__c + '\n' +
+                                      'Target Object: ' + jobTracker.CgInfinity__Target_Object__c + '\n' +
                                       'Total Records: ' + totalRecords + '\n' +
                                       'Processed Records: ' + processedRecords + '\n' +
                                       'Successful Records: ' + (processedRecords - failedRecords) + '\n' +
@@ -651,13 +614,14 @@ public class ProcessDataFeed implements Database.Batchable<SObject>
                 } catch (Exception e) {
                     System.debug('Failed to send completion email: ' + e.getMessage());
                 }
-
-                //CSVUploaderController.invokeProcessDataFeedBatch(jobTracker.File_Name__c, jobTracker.Operation_Type__c, jobTracker.Target_Object__c);
+ 
+                //CSVUploaderController.invokeProcessDataFeedBatch(jobTracker.CgInfinity__File_Name__c, jobTracker.CgInfinity__Operation_Type__c, jobTracker.CgInfinity__Target_Object__c);
             }
             // else {
-            //     jobTracker.Status__c = 'Ready for Processing';
+            //     jobTracker.CgInfinity__Status__c = 'Ready for Processing';
             //     update jobTracker;
             // }
         }
 }
+ 
  

@@ -4,12 +4,12 @@ public without sharing class CSVUploaderController {
 
         System.debug('jsonDataList'+jsonDataList);
         
-        List<Data_Feed_Record__c> records = new List<Data_Feed_Record__c>();
+        List<CgInfinity__Data_Feed_Record__c> records = new List<CgInfinity__Data_Feed_Record__c>();
     
         for (String jsonString : jsonDataList) {
-            Data_Feed_Record__c obj = new Data_Feed_Record__c();
-            obj.Data_Feed_Record_JSON__c = jsonString;
-            obj.File_Name__c = fileName;
+            CgInfinity__Data_Feed_Record__c obj = new CgInfinity__Data_Feed_Record__c();
+            obj.CgInfinity__Data_Feed_Record_JSON__c = jsonString;
+            obj.CgInfinity__File_Name__c = fileName;
             records.add(obj);
         }
     
@@ -19,20 +19,20 @@ public without sharing class CSVUploaderController {
     @AuraEnabled
     public static void updateDataFeedJobTrackerStatus(String status, String fileName, string operationType, String targetObject) {
         try {
-            List<Data_Feed_Job_Tracker__c> jobTrackers = [SELECT Id, Status__c FROM Data_Feed_Job_Tracker__c WHERE File_Name__c = :fileName AND Operation_Type__c =:operationType order by createddate desc LIMIT 1];
+            List<CgInfinity__Data_Feed_Job_Tracker__c> jobTrackers = [SELECT Id, CgInfinity__Status__c FROM CgInfinity__Data_Feed_Job_Tracker__c WHERE CgInfinity__File_Name__c = :fileName AND CgInfinity__Operation_Type__c =:operationType order by createddate desc LIMIT 1];
             
             if (jobTrackers.isEmpty()) {
-                Data_feed_Job_Tracker__c newJobTracker = new Data_Feed_Job_Tracker__c();
-                newJobTracker.File_Name__c = fileName;
-                newJobTracker.Status__c = status;
-                newJobTracker.Operation_Type__c = operationType;
-                newJobTracker.Target_Object__c = targetObject;
+                CgInfinity__Data_Feed_Job_Tracker__c newJobTracker = new CgInfinity__Data_Feed_Job_Tracker__c();
+                newJobTracker.CgInfinity__File_Name__c = fileName;
+                newJobTracker.CgInfinity__Status__c = status;
+                newJobTracker.CgInfinity__Operation_Type__c = operationType;
+                newJobTracker.CgInfinity__Target_Object__c = targetObject;
                 System.debug('newJobTracker: ' + newJobTracker);
                 insert newJobTracker;
             }
             else{
-                Data_Feed_Job_Tracker__c jobTracker = jobTrackers[0];
-                jobTracker.Status__c = status;
+                CgInfinity__Data_Feed_Job_Tracker__c jobTracker = jobTrackers[0];
+                jobTracker.CgInfinity__Status__c = status;
                 update jobTracker;
             }
         } catch (Exception e) {
